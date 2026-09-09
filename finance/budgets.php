@@ -48,7 +48,7 @@ require_once __DIR__ . '/../includes/page_start.php';
           <form method="post" class="d-flex gap-1">
             <input type="hidden" name="csrf_token" value="<?php echo csrf_token(); ?>">
             <input type="hidden" name="project_id" value="<?php echo $r['project_id']; ?>">
-            <input type="number" step="0.01" name="allocated_amount" class="form-control form-control-sm" style="width:140px" value="<?php echo $alloc; ?>" required>
+            <input type="number" step="0.01" min="0.01" name="allocated_amount" class="form-control form-control-sm" style="width:140px" value="<?php echo $alloc; ?>" required>
             <button class="btn btn-sm btn-outline-success"><i class="bi bi-check-lg"></i></button>
           </form>
         </td>
