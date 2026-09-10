@@ -2,6 +2,9 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap');
 
 :root {
+  --ccms-primary: #10b981;
+  --ccms-primary-dark: #059669;
+  --ccms-primary-light: #34d399;
   --ccms-bg: #0b0f19;
   --ccms-card-bg: #131b2e;
   --ccms-card-border: rgba(16, 185, 129, 0.2);
@@ -23,6 +26,18 @@
   --sidebar-width: 250px;
   --topbar-height: 60px;
   --radius: 0.75rem;
+
+  /* High contrast font colors for dark theme */
+  --bs-body-color: #f1f5f9;
+  --bs-body-color-rgb: 241, 245, 249;
+  --bs-secondary-color: #94a3b8;
+  --bs-secondary-color-rgb: 148, 163, 184;
+  --bs-tertiary-color: #64748b;
+  --bs-emphasis-color: #ffffff;
+  --bs-emphasis-color-rgb: 255, 255, 255;
+  --bs-link-color: #38bdf8;
+  --bs-link-hover-color: #7dd3fc;
+  color-scheme: dark;
 }
 
 body {
@@ -35,6 +50,31 @@ body {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   color: var(--ccms-text-main);
   -webkit-font-smoothing: antialiased;
+}
+
+/* ---- Visible Links & Text Utilities ---- */
+a {
+  color: #38bdf8;
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+a:hover {
+  color: #7dd3fc;
+}
+a.text-muted, .text-muted a {
+  color: #38bdf8 !important;
+}
+a.text-muted:hover, .text-muted a:hover {
+  color: #7dd3fc !important;
+}
+.text-muted, .text-body-secondary {
+  color: #94a3b8 !important;
+}
+.text-secondary {
+  color: #cbd5e1 !important;
+}
+.text-body {
+  color: #f1f5f9 !important;
 }
 
 /* ---- Top bar ---- */
@@ -107,7 +147,7 @@ body {
   font-size: 1.15rem;
   width: 22px;
   text-align: center;
-  color: #64748b;
+  color: #94a3b8;
   transition: all 0.2s ease-in-out;
 }
 
@@ -232,6 +272,10 @@ body {
   letter-spacing: 0.03em;
 }
 
+.form-check-label {
+  color: #cbd5e1;
+}
+
 .form-control, .form-select {
   background-color: #0f172a;
   border: 1px solid #334155;
@@ -243,7 +287,8 @@ body {
 }
 
 .form-control::placeholder {
-  color: #64748b;
+  color: #94a3b8;
+  opacity: 0.8;
 }
 
 .form-control:focus, .form-select:focus {
@@ -251,6 +296,14 @@ body {
   color: #ffffff;
   border-color: var(--neon-cyan);
   box-shadow: 0 0 15px rgba(6, 182, 212, 0.4);
+}
+
+.form-control:disabled, .form-control[readonly],
+.form-select:disabled {
+  background-color: #1e293b !important;
+  color: #94a3b8 !important;
+  border-color: #334155 !important;
+  opacity: 0.9;
 }
 
 .form-select option {
@@ -279,10 +332,24 @@ body {
   display: block;
 }
 
+/* ---- Neon Lists ---- */
+.list-group {
+  --bs-list-group-color: var(--ccms-text-main);
+  --bs-list-group-bg: transparent;
+  --bs-list-group-border-color: rgba(51, 65, 85, 0.6);
+}
+
+.list-group-item {
+  color: var(--ccms-text-main) !important;
+  background-color: transparent !important;
+  border-color: rgba(51, 65, 85, 0.6) !important;
+}
+
 /* ---- Dark Neon Tables ---- */
 .table {
   color: #e2e8f0;
   --bs-table-bg: transparent;
+  --bs-table-color: #e2e8f0;
 }
 
 .table thead th {
@@ -308,9 +375,39 @@ body {
   color: #ffffff;
 }
 
+.table-hover tbody tr:hover td {
+  color: #ffffff;
+}
+
 .table-danger {
+  --bs-table-color: #fecdd3 !important;
+  --bs-table-bg: rgba(244, 63, 94, 0.15) !important;
   background-color: rgba(244, 63, 94, 0.15) !important;
   border-color: rgba(244, 63, 94, 0.3) !important;
+  color: #fecdd3 !important;
+}
+
+.table-danger td, .table-danger th {
+  color: #fecdd3 !important;
+}
+
+.table-warning {
+  --bs-table-color: #fde68a !important;
+  --bs-table-bg: rgba(245, 158, 11, 0.15) !important;
+  background-color: rgba(245, 158, 11, 0.15) !important;
+  border-color: rgba(245, 158, 11, 0.3) !important;
+  color: #fde68a !important;
+}
+
+.table-warning td, .table-warning th {
+  color: #fde68a !important;
+}
+
+.table tfoot th, .table tfoot td {
+  color: #f1f5f9;
+  font-weight: 700;
+  border-top: 2px solid rgba(6, 182, 212, 0.3);
+  padding: 0.85rem 1rem;
 }
 
 /* ---- Neon Buttons ---- */
@@ -363,6 +460,44 @@ body {
   box-shadow: 0 0 20px var(--neon-emerald-glow);
 }
 
+.btn-outline-primary {
+  color: var(--neon-cyan);
+  border-color: var(--neon-cyan);
+  background: transparent;
+}
+
+.btn-outline-primary:hover, .btn-outline-primary:focus {
+  background: var(--neon-cyan);
+  color: #000000;
+  font-weight: 700;
+  box-shadow: 0 0 20px var(--neon-cyan-glow);
+}
+
+.btn-outline-warning {
+  color: var(--neon-amber);
+  border-color: var(--neon-amber);
+  background: transparent;
+}
+
+.btn-outline-warning:hover, .btn-outline-warning:focus {
+  background: var(--neon-amber);
+  color: #000000;
+  font-weight: 700;
+  box-shadow: 0 0 20px var(--neon-amber-glow);
+}
+
+.btn-outline-info {
+  color: #38bdf8;
+  border-color: #38bdf8;
+  background: transparent;
+}
+
+.btn-outline-info:hover, .btn-outline-info:focus {
+  background: #38bdf8;
+  color: #000000;
+  font-weight: 700;
+}
+
 .btn-outline-danger {
   color: var(--neon-rose);
   border-color: var(--neon-rose);
@@ -380,6 +515,36 @@ body {
   font-weight: 600;
   letter-spacing: 0.03em;
   padding: 0.4em 0.7em;
+}
+
+.badge.bg-secondary {
+  background-color: #334155 !important;
+  color: #f1f5f9 !important;
+  border: 1px solid #475569;
+}
+
+.badge.bg-info {
+  background-color: rgba(6, 182, 212, 0.2) !important;
+  color: #67e8f9 !important;
+  border: 1px solid rgba(6, 182, 212, 0.4);
+}
+
+.badge.bg-success {
+  background-color: rgba(16, 185, 129, 0.2) !important;
+  color: #6ee7b7 !important;
+  border: 1px solid rgba(16, 185, 129, 0.4);
+}
+
+.badge.bg-danger {
+  background-color: rgba(244, 63, 94, 0.2) !important;
+  color: #fda4af !important;
+  border: 1px solid rgba(244, 63, 94, 0.4);
+}
+
+.badge.bg-warning {
+  background-color: rgba(245, 158, 11, 0.25) !important;
+  color: #fde68a !important;
+  border: 1px solid rgba(245, 158, 11, 0.4);
 }
 
 .bg-warning-subtle {
@@ -402,6 +567,24 @@ body {
   border: 1px solid var(--neon-emerald);
   color: #a7f3d0;
   box-shadow: 0 0 15px rgba(16, 185, 129, 0.2);
+}
+
+.alert-warning {
+  background-color: rgba(245, 158, 11, 0.15);
+  border: 1px solid var(--neon-amber);
+  color: #fde68a;
+  box-shadow: 0 0 15px rgba(245, 158, 11, 0.2);
+}
+
+.alert-info {
+  background-color: rgba(6, 182, 212, 0.15);
+  border: 1px solid var(--neon-cyan);
+  color: #a5f3fc;
+  box-shadow: 0 0 15px rgba(6, 182, 212, 0.2);
+}
+
+.btn-close {
+  filter: invert(1) grayscale(100%) brightness(200%);
 }
 
 /* ---- Auth Pages ---- */
