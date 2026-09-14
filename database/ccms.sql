@@ -1,14 +1,7 @@
--- =====================================================================
--- Construction Company Management System (CCMS)
--- Database Schema  |  Chaminda Construction Company  |  Group G06
--- Import this file in phpMyAdmin (XAMPP) or: mysql -u root -p < ccms.sql
--- =====================================================================
 CREATE DATABASE IF NOT EXISTS ccms_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 USE ccms_db;
 
--- ---------------------------------------------------------------
 -- User & Client Management
--- ---------------------------------------------------------------
 CREATE TABLE users (
     user_id        INT AUTO_INCREMENT PRIMARY KEY,
     full_name      VARCHAR(100) NOT NULL,
@@ -32,9 +25,7 @@ CREATE TABLE clients (
     created_at  TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB;
 
--- ---------------------------------------------------------------
 -- Project Management
--- ---------------------------------------------------------------
 CREATE TABLE employees (
     employee_id  INT AUTO_INCREMENT PRIMARY KEY,
     full_name    VARCHAR(100) NOT NULL,
@@ -84,9 +75,7 @@ CREATE TABLE project_progress_log (
     FOREIGN KEY (updated_by) REFERENCES users(user_id)
 ) ENGINE=InnoDB;
 
--- ---------------------------------------------------------------
 -- Material & Inventory Management
--- ---------------------------------------------------------------
 CREATE TABLE materials (
     material_id    INT AUTO_INCREMENT PRIMARY KEY,
     name           VARCHAR(100) NOT NULL,
@@ -134,9 +123,7 @@ CREATE TABLE material_requests (
     FOREIGN KEY (approved_by) REFERENCES users(user_id)
 ) ENGINE=InnoDB;
 
--- ---------------------------------------------------------------
 -- Finance Management
--- ---------------------------------------------------------------
 CREATE TABLE budgets (
     budget_id        INT AUTO_INCREMENT PRIMARY KEY,
     project_id        INT NOT NULL UNIQUE,
@@ -170,9 +157,7 @@ CREATE TABLE payments (
     FOREIGN KEY (recorded_by) REFERENCES users(user_id)
 ) ENGINE=InnoDB;
 
--- ---------------------------------------------------------------
 -- Supplier Management
--- ---------------------------------------------------------------
 CREATE TABLE suppliers (
     supplier_id     INT AUTO_INCREMENT PRIMARY KEY,
     name             VARCHAR(100) NOT NULL,
@@ -205,10 +190,7 @@ CREATE TABLE purchase_order_items (
     FOREIGN KEY (material_id) REFERENCES materials(material_id)
 ) ENGINE=InnoDB;
 
--- ---------------------------------------------------------------
--- Audit log (Data Integrity & Audit requirement: every transaction
--- logs the user ID, date and timestamp)
--- ---------------------------------------------------------------
+
 CREATE TABLE audit_log (
     log_id      INT AUTO_INCREMENT PRIMARY KEY,
     user_id     INT NULL,
@@ -219,10 +201,7 @@ CREATE TABLE audit_log (
     FOREIGN KEY (user_id) REFERENCES users(user_id)
 ) ENGINE=InnoDB;
 
--- ---------------------------------------------------------------
--- Seed data: default Administrator account
--- Username: admin   Password: Admin@123  (change after first login)
--- ---------------------------------------------------------------
+
 INSERT INTO users (full_name, username, email, password_hash, role, status)
 VALUES ('System Administrator', 'admin', 'admin@chaminda.lk',
         '$2b$10$4jR7E/rE7U9VdqrZTjWx7.bg.NSQc1meK8hDOWGFKRPZLC3qQOw56', -- password: Admin@123 (CHANGE after first login)
