@@ -78,7 +78,7 @@ require_once __DIR__ . '/../includes/page_start.php';
       </div>
       <div class="col-md-4">
         <label class="form-label required">Estimated Budget (LKR)</label>
-        <input type="number" step="0.01" name="estimated_budget" class="form-control" value="<?php echo $project['estimated_budget']; ?>">
+        <input type="number" step="0.01" min="0.01" name="estimated_budget" class="form-control" required value="<?php echo $project['estimated_budget']; ?>">
       </div>
       <div class="col-md-6">
         <label class="form-label required">Project Manager</label>

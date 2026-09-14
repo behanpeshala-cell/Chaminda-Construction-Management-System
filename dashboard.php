@@ -145,15 +145,19 @@ require_once __DIR__ . '/includes/page_start.php';
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 <script>
+if (typeof Chart !== 'undefined') {
+  Chart.defaults.color = '#cbd5e1';
+  Chart.defaults.borderColor = 'rgba(51, 65, 85, 0.4)';
+}
 <?php if (in_array($role, ['Administrator','Project Manager','Site Staff'])): ?>
 new Chart(document.getElementById('projStatusChart'), {
   type: 'doughnut',
   data: {
     labels: <?php echo json_encode(array_column($projByStatus,'status')); ?>,
     datasets: [{ data: <?php echo json_encode(array_column($projByStatus,'c')); ?>,
-      backgroundColor: ['#1e4d2b','#0d6efd','#d98e04','#198754','#b02a37'] }]
+      backgroundColor: ['#10b981','#06b6d4','#f59e0b','#3b82f6','#f43f5e'] }]
   },
-  options: { plugins: { legend: { position: 'bottom' } } }
+  options: { plugins: { legend: { position: 'bottom', labels: { color: '#cbd5e1' } } } }
 });
 <?php endif; ?>
 
@@ -163,9 +167,15 @@ new Chart(document.getElementById('expCategoryChart'), {
   data: {
     labels: <?php echo json_encode(array_column($expByCategory,'category')); ?>,
     datasets: [{ label: 'LKR', data: <?php echo json_encode(array_column($expByCategory,'total')); ?>,
-      backgroundColor: '#1e4d2b' }]
+      backgroundColor: '#10b981' }]
   },
-  options: { plugins: { legend: { display: false } } }
+  options: {
+    plugins: { legend: { display: false } },
+    scales: {
+      x: { ticks: { color: '#cbd5e1' }, grid: { color: 'rgba(51, 65, 85, 0.4)' } },
+      y: { ticks: { color: '#cbd5e1' }, grid: { color: 'rgba(51, 65, 85, 0.4)' } }
+    }
+  }
 });
 <?php endif; ?>
 </script>
