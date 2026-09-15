@@ -1102,7 +1102,7 @@
     </nav>
 
     <div class="nav-right">
-      <a href="ccms/login.php" class="btn btn-amber">
+      <a href="login.php" class="btn btn-amber">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
         CCMS Portal
       </a>
@@ -1464,7 +1464,7 @@
         </div>
       </div>
 
-      <a href="ccms/login.php" class="btn btn-amber">
+      <a href="login.php" class="btn btn-amber">
         Launch CCMS Portal Demo &rarr;
       </a>
     </div>
@@ -1699,8 +1699,8 @@
       <div>
         <h4 class="footer-title">CCMS Platform</h4>
         <ul class="footer-links">
-          <li><a href="ccms/login.php">Staff Login</a></li>
-          <li><a href="ccms/login.php">Client Portal</a></li>
+          <li><a href="login.php">Staff Login</a></li>
+          <li><a href="login.php">Client Portal</a></li>
           <li><a href="#ccms">Platform Overview</a></li>
         </ul>
       </div>
@@ -1866,6 +1866,13 @@
       Estimated Duration: <strong>${estMonths} Months</strong><br>
       Estimated Rate: ~LKR ${Math.round(baseRate * finish).toLocaleString()} per sq. ft.
     `;
+  }
+
+  // If the HTML page is opened directly from disk (file:///), link to localhost Apache server
+  if (window.location.protocol === 'file:') {
+    document.querySelectorAll('a[href="login.php"], a[href="ccms/login.php"]').forEach(el => {
+      el.href = 'http://localhost/ccms/login.php';
+    });
   }
 </script>
 </body>
