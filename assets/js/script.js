@@ -69,10 +69,11 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   // -------------------------------------------------------------
-  // 2. LIVE EMAIL & PHONE VALIDATION HANDLERS
+  // 2. LIVE EMAIL, PHONE & NIC VALIDATION HANDLERS
   // -------------------------------------------------------------
   var emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
   var phoneRegex = /^\+?[0-9\s\-\(\)]{9,15}$/;
+  var nicRegex = /^([0-9]{9}[vVxX]|[0-9]{12})$/;
 
   function setFieldError(field, errorMsg) {
     field.classList.add('is-invalid');
@@ -132,7 +133,25 @@ document.addEventListener('DOMContentLoaded', function () {
     return true;
   }
 
-  // Bind live blur & input validation on email & phone inputs
+  function validateNicInput(field) {
+    var val = field.value.trim();
+    if (val === '') {
+      if (field.hasAttribute('required')) {
+        setFieldError(field, 'NIC number is required.');
+        return false;
+      }
+      clearFieldError(field);
+      return true;
+    }
+    if (!nicRegex.test(val)) {
+      setFieldError(field, 'Please enter a valid Sri Lankan NIC (9 digits + V/X or 12 digits).');
+      return false;
+    }
+    clearFieldError(field);
+    return true;
+  }
+
+  // Bind live blur & input validation on email, phone & NIC inputs
   document.querySelectorAll('input[type="email"], input[name="email"]').forEach(function (field) {
     field.addEventListener('blur', function () { validateEmailInput(field); });
     field.addEventListener('input', function () { if (field.classList.contains('is-invalid')) validateEmailInput(field); });
@@ -141,6 +160,14 @@ document.addEventListener('DOMContentLoaded', function () {
   document.querySelectorAll('input[type="tel"], input[name="phone"]').forEach(function (field) {
     field.addEventListener('blur', function () { validatePhoneInput(field); });
     field.addEventListener('input', function () { if (field.classList.contains('is-invalid')) validatePhoneInput(field); });
+  });
+
+  document.querySelectorAll('input[name="nic_number"]').forEach(function (field) {
+    field.addEventListener('blur', function () { validateNicInput(field); });
+    field.addEventListener('input', function () {
+      field.value = field.value.toUpperCase();
+      if (field.classList.contains('is-invalid')) validateNicInput(field);
+    });
   });
 
   // Validate on form submit
@@ -152,6 +179,9 @@ document.addEventListener('DOMContentLoaded', function () {
       });
       form.querySelectorAll('input[type="tel"], input[name="phone"]').forEach(function (field) {
         if (!validatePhoneInput(field)) isValid = false;
+      });
+      form.querySelectorAll('input[name="nic_number"]').forEach(function (field) {
+        if (!validateNicInput(field)) isValid = false;
       });
 
       if (!isValid) {

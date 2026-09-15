@@ -7,6 +7,9 @@ CREATE TABLE users (
     full_name      VARCHAR(100) NOT NULL,
     username       VARCHAR(50)  NOT NULL UNIQUE,
     email          VARCHAR(100) NOT NULL UNIQUE,
+    nic_number     VARCHAR(20)  NULL,
+    date_of_birth  DATE         NULL,
+    gender         ENUM('Male','Female','Other') NULL,
     password_hash  VARCHAR(255) NOT NULL,
     role           ENUM('Administrator','Project Manager','Finance Officer','Procurement Staff','Site Staff','Client') NOT NULL,
     status         ENUM('active','inactive') NOT NULL DEFAULT 'active',
@@ -16,13 +19,16 @@ CREATE TABLE users (
 ) ENGINE=InnoDB;
 
 CREATE TABLE clients (
-    client_id   INT AUTO_INCREMENT PRIMARY KEY,
-    name        VARCHAR(100) NOT NULL,
-    email       VARCHAR(100),
-    phone       VARCHAR(20),
-    address     VARCHAR(255),
-    status      ENUM('active','inactive') NOT NULL DEFAULT 'active',
-    created_at  TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    client_id      INT AUTO_INCREMENT PRIMARY KEY,
+    name           VARCHAR(100) NOT NULL,
+    nic_number     VARCHAR(20)  NULL,
+    date_of_birth  DATE         NULL,
+    gender         ENUM('Male','Female','Other') NULL,
+    email          VARCHAR(100),
+    phone          VARCHAR(20),
+    address        VARCHAR(255),
+    status         ENUM('active','inactive') NOT NULL DEFAULT 'active',
+    created_at     TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB;
 
 -- Project Management

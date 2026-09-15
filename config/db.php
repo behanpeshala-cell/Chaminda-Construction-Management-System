@@ -2,7 +2,7 @@
 define('DB_HOST', 'localhost');
 define('DB_NAME', 'ccms_db');
 define('DB_USER', 'root');
-define('DB_PASS', '');   // set your XAMPP MySQL password here if any
+define('DB_PASS', '');
 
 try {
     $pdo = new PDO(
@@ -19,8 +19,7 @@ try {
     die("Database connection failed. Please make sure MySQL is running in XAMPP and the 'ccms_db' database has been imported. (" . $e->getMessage() . ")");
 }
 
-// App-wide settings
 define('APP_NAME', 'CCMS - Chaminda Construction Company');
-define('SESSION_TIMEOUT_SECONDS', 900);      // 15 min idle timeout
+define('SESSION_TIMEOUT_SECONDS', 900);   
 define('MAX_LOGIN_ATTEMPTS', 5);
 define('LOCKOUT_MINUTES', 15);
