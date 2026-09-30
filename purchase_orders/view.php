@@ -61,7 +61,8 @@ $badge = ['Pending'=>'secondary','Approved'=>'info','Delivered'=>'success','Canc
       <p class="mb-1"><strong>Created by:</strong> <?php echo htmlspecialchars($po['created_by_name']); ?> on <?php echo $po['created_at']; ?></p>
       <p class="mb-0"><strong>Status:</strong> <span class="badge bg-<?php echo $badge; ?>"><?php echo htmlspecialchars($po['status']); ?></span></p>
     </div>
-    <div class="align-self-start">
+    <div class="align-self-start d-flex align-items-center gap-2">
+      <a href="/ccms/reports/export_pdf.php?type=po_single&id=<?php echo $id; ?>" class="btn btn-sm btn-outline-success"><i class="bi bi-file-earmark-pdf"></i> Download PDF Invoice</a>
       <?php if ($po['status'] === 'Pending'): ?>
         <form method="post" class="d-inline"><input type="hidden" name="csrf_token" value="<?php echo csrf_token(); ?>"><input type="hidden" name="action" value="approve"><button class="btn btn-sm btn-success"><i class="bi bi-check-lg"></i> Approve</button></form>
         <form method="post" class="d-inline" data-confirm="Cancel this purchase order?"><input type="hidden" name="csrf_token" value="<?php echo csrf_token(); ?>"><input type="hidden" name="action" value="cancel"><button class="btn btn-sm btn-outline-danger"><i class="bi bi-x-lg"></i> Cancel</button></form>
