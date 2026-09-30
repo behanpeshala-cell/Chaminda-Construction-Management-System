@@ -7,28 +7,51 @@ $roles = ['Administrator','Project Manager','Finance Officer','Procurement Staff
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     csrf_check();
-    $full_name = trim($_POST['full_name'] ?? '');
-    $username  = trim($_POST['username'] ?? '');
-    $email     = trim($_POST['email'] ?? '');
-    $role      = $_POST['role'] ?? '';
-    $password  = $_POST['password'] ?? '';
+    $full_name     = trim($_POST['full_name'] ?? '');
+    $username      = trim($_POST['username'] ?? '');
+    $email         = trim($_POST['email'] ?? '');
+    $nic_number    = strtoupper(trim($_POST['nic_number'] ?? ''));
+    $date_of_birth = trim($_POST['date_of_birth'] ?? '');
+    $gender        = trim($_POST['gender'] ?? '');
+    $role          = $_POST['role'] ?? '';
+    $password      = $_POST['password'] ?? '';
 
     if ($full_name === '') $errors[] = 'Full name is required.';
     if ($username === '')  $errors[] = 'Username is required.';
     if (!filter_var($email, FILTER_VALIDATE_EMAIL)) $errors[] = 'A valid email is required.';
+
+    // NIC Validation
+    if ($nic_number === '') {
+        $errors[] = 'NIC number is required.';
+    } elseif (!preg_match('/^([0-9]{9}[vVxX]|[0-9]{12})$/', $nic_number)) {
+        $errors[] = 'Please enter a valid Sri Lankan NIC (9 digits + V/X or 12 digits).';
+    }
+
+    // Date of Birth Validation
+    if ($date_of_birth === '') {
+        $errors[] = 'Date of birth is required.';
+    } elseif ($date_of_birth > date('Y-m-d')) {
+        $errors[] = 'Date of birth cannot be in the future.';
+    }
+
+    // Gender Validation
+    if (!in_array($gender, ['Male', 'Female', 'Other'], true)) {
+        $errors[] = 'Please select a valid gender.';
+    }
+
     if (!in_array($role, $roles, true)) $errors[] = 'Please select a valid role.';
     if (strlen($password) < 8) $errors[] = 'Password must be at least 8 characters.';
 
     if (!$errors) {
-        $dup = $pdo->prepare("SELECT COUNT(*) FROM users WHERE username=? OR email=?");
-        $dup->execute([$username, $email]);
-        if ($dup->fetchColumn() > 0) $errors[] = 'That username or email is already registered.';
+        $dup = $pdo->prepare("SELECT COUNT(*) FROM users WHERE username=? OR email=? OR nic_number=?");
+        $dup->execute([$username, $email, $nic_number]);
+        if ($dup->fetchColumn() > 0) $errors[] = 'That username, email, or NIC number is already registered.';
     }
 
     if (!$errors) {
         $hash = password_hash($password, PASSWORD_BCRYPT);
-        $stmt = $pdo->prepare("INSERT INTO users (full_name, username, email, password_hash, role) VALUES (?,?,?,?,?)");
-        $stmt->execute([$full_name, $username, $email, $hash, $role]);
+        $stmt = $pdo->prepare("INSERT INTO users (full_name, username, email, nic_number, date_of_birth, gender, password_hash, role) VALUES (?,?,?,?,?,?,?,?)");
+        $stmt->execute([$full_name, $username, $email, $nic_number, $date_of_birth, $gender, $hash, $role]);
         audit($pdo, 'CREATE', 'users', (int)$pdo->lastInsertId());
         set_flash('success', 'User created successfully.');
         redirect('/ccms/users/list.php');
@@ -37,7 +60,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 require_once __DIR__ . '/../includes/page_start.php';
 ?>
-<div class="card p-4" style="max-width:560px">
+<div class="card p-4" style="max-width:650px">
   <?php foreach ($errors as $e): ?><div class="alert alert-danger py-2"><?php echo htmlspecialchars($e); ?></div><?php endforeach; ?>
   <form method="post" novalidate>
     <input type="hidden" name="csrf_token" value="<?php echo csrf_token(); ?>">
@@ -45,23 +68,50 @@ require_once __DIR__ . '/../includes/page_start.php';
       <label class="form-label required">Full Name</label>
       <input type="text" name="full_name" class="form-control" required value="<?php echo htmlspecialchars($_POST['full_name'] ?? ''); ?>">
     </div>
-    <div class="mb-3">
-      <label class="form-label required">Username</label>
-      <input type="text" name="username" class="form-control" required value="<?php echo htmlspecialchars($_POST['username'] ?? ''); ?>">
+
+    <div class="row g-2 mb-3">
+      <div class="col-md-6">
+        <label class="form-label required">Username</label>
+        <input type="text" name="username" class="form-control" required value="<?php echo htmlspecialchars($_POST['username'] ?? ''); ?>">
+      </div>
+      <div class="col-md-6">
+        <label class="form-label required">Email</label>
+        <input type="email" name="email" class="form-control" required value="<?php echo htmlspecialchars($_POST['email'] ?? ''); ?>">
+      </div>
     </div>
-    <div class="mb-3">
-      <label class="form-label required">Email</label>
-      <input type="email" name="email" class="form-control" required value="<?php echo htmlspecialchars($_POST['email'] ?? ''); ?>">
+
+    <div class="row g-2 mb-3">
+      <div class="col-md-6">
+        <label class="form-label required">NIC Number</label>
+        <input type="text" name="nic_number" class="form-control" placeholder="e.g. 199512345678 or 123456789V" required maxlength="12" value="<?php echo htmlspecialchars($_POST['nic_number'] ?? ''); ?>">
+      </div>
+      <div class="col-md-6">
+        <label class="form-label required">Gender</label>
+        <select name="gender" class="form-select" required>
+          <option value="">-- Select Gender --</option>
+          <?php foreach (['Male','Female','Other'] as $g): ?>
+            <option value="<?php echo $g; ?>" <?php echo (($_POST['gender'] ?? '') === $g) ? 'selected' : ''; ?>><?php echo $g; ?></option>
+          <?php endforeach; ?>
+        </select>
+      </div>
     </div>
-    <div class="mb-3">
-      <label class="form-label required">Role</label>
-      <select name="role" class="form-select" required>
-        <option value="">-- Select role --</option>
-        <?php foreach ($roles as $r): ?>
-          <option value="<?php echo $r; ?>" <?php echo (($_POST['role'] ?? '') === $r) ? 'selected' : ''; ?>><?php echo $r; ?></option>
-        <?php endforeach; ?>
-      </select>
+
+    <div class="row g-2 mb-3">
+      <div class="col-md-6">
+        <label class="form-label required">Date of Birth</label>
+        <input type="date" name="date_of_birth" class="form-control" max="<?php echo date('Y-m-d'); ?>" required value="<?php echo htmlspecialchars($_POST['date_of_birth'] ?? ''); ?>">
+      </div>
+      <div class="col-md-6">
+        <label class="form-label required">Role</label>
+        <select name="role" class="form-select" required>
+          <option value="">-- Select role --</option>
+          <?php foreach ($roles as $r): ?>
+            <option value="<?php echo $r; ?>" <?php echo (($_POST['role'] ?? '') === $r) ? 'selected' : ''; ?>><?php echo $r; ?></option>
+          <?php endforeach; ?>
+        </select>
+      </div>
     </div>
+
     <div class="mb-3">
       <label class="form-label required">Temporary Password</label>
       <input type="password" name="password" class="form-control" required minlength="8">
