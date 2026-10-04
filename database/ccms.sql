@@ -81,7 +81,7 @@ CREATE TABLE project_progress_log (
     FOREIGN KEY (updated_by) REFERENCES users(user_id)
 ) ENGINE=InnoDB;
 
--- Material & Inventory Management
+-- Material & Inventory Management--
 CREATE TABLE materials (
     material_id    INT AUTO_INCREMENT PRIMARY KEY,
     name           VARCHAR(100) NOT NULL,
