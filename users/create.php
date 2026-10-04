@@ -10,6 +10,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $full_name     = trim($_POST['full_name'] ?? '');
     $username      = trim($_POST['username'] ?? '');
     $email         = trim($_POST['email'] ?? '');
+    $phone         = trim($_POST['phone'] ?? '');
     $nic_number    = strtoupper(trim($_POST['nic_number'] ?? ''));
     $date_of_birth = trim($_POST['date_of_birth'] ?? '');
     $gender        = trim($_POST['gender'] ?? '');
@@ -19,6 +20,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($full_name === '') $errors[] = 'Full name is required.';
     if ($username === '')  $errors[] = 'Username is required.';
     if (!filter_var($email, FILTER_VALIDATE_EMAIL)) $errors[] = 'A valid email is required.';
+
+    // Phone Validation
+    if ($phone !== '' && !preg_match('/^0[0-9]{9}$/', $phone)) {
+        $errors[] = 'Phone number must be exactly 10 digits starting with 0 (e.g. 0712345678).';
+    }
 
     // NIC Validation
     if ($nic_number === '') {
@@ -50,8 +56,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if (!$errors) {
         $hash = password_hash($password, PASSWORD_BCRYPT);
-        $stmt = $pdo->prepare("INSERT INTO users (full_name, username, email, nic_number, date_of_birth, gender, password_hash, role) VALUES (?,?,?,?,?,?,?,?)");
-        $stmt->execute([$full_name, $username, $email, $nic_number, $date_of_birth, $gender, $hash, $role]);
+        $stmt = $pdo->prepare("INSERT INTO users (full_name, username, email, phone, nic_number, date_of_birth, gender, password_hash, role) VALUES (?,?,?,?,?,?,?,?,?)");
+        $stmt->execute([$full_name, $username, $email, $phone, $nic_number, $date_of_birth, $gender, $hash, $role]);
         audit($pdo, 'CREATE', 'users', (int)$pdo->lastInsertId());
         set_flash('success', 'User created successfully.');
         redirect('/ccms/users/list.php');
@@ -82,9 +88,19 @@ require_once __DIR__ . '/../includes/page_start.php';
 
     <div class="row g-2 mb-3">
       <div class="col-md-6">
+        <label class="form-label">Phone Number</label>
+        <input type="text" inputmode="numeric" name="phone" class="form-control" maxlength="10"
+               pattern="0[0-9]{9}" title="Please enter a 10-digit phone number starting with 0 (e.g. 0712345678)"
+               oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 10);"
+               value="<?php echo htmlspecialchars($_POST['phone'] ?? ''); ?>" placeholder="07xxxxxxxx">
+      </div>
+      <div class="col-md-6">
         <label class="form-label required">NIC Number</label>
         <input type="text" name="nic_number" class="form-control" placeholder="e.g. 199512345678 or 123456789V" required maxlength="12" value="<?php echo htmlspecialchars($_POST['nic_number'] ?? ''); ?>">
       </div>
+    </div>
+
+    <div class="row g-2 mb-3">
       <div class="col-md-6">
         <label class="form-label required">Gender</label>
         <select name="gender" class="form-select" required>
@@ -94,16 +110,15 @@ require_once __DIR__ . '/../includes/page_start.php';
           <?php endforeach; ?>
         </select>
       </div>
-    </div>
-
-    <div class="row g-2 mb-3">
       <div class="col-md-6">
         <label class="form-label required">Date of Birth</label>
         <input type="date" name="date_of_birth" class="form-control" max="<?php echo date('Y-m-d'); ?>" required value="<?php echo htmlspecialchars($_POST['date_of_birth'] ?? ''); ?>">
       </div>
-      <div class="col-md-6">
-        <label class="form-label required">Role</label>
-        <select name="role" class="form-select" required>
+    </div>
+
+    <div class="mb-3">
+      <label class="form-label required">Role</label>
+      <select name="role" class="form-select" required>
           <option value="">-- Select role --</option>
           <?php foreach ($roles as $r): ?>
             <option value="<?php echo $r; ?>" <?php echo (($_POST['role'] ?? '') === $r) ? 'selected' : ''; ?>><?php echo $r; ?></option>

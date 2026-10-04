@@ -7,6 +7,7 @@ CREATE TABLE users (
     full_name      VARCHAR(100) NOT NULL,
     username       VARCHAR(50)  NOT NULL UNIQUE,
     email          VARCHAR(100) NOT NULL UNIQUE,
+    phone          VARCHAR(20)  NULL,
     nic_number     VARCHAR(20)  NULL,
     date_of_birth  DATE         NULL,
     gender         ENUM('Male','Female','Other') NULL,

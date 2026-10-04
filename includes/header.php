@@ -26,7 +26,7 @@
       </a>
     </div>
     <div class="d-flex align-items-center text-white gap-3">
-      <div class="d-none d-sm-flex align-items-center gap-2 bg-white bg-opacity-10 px-3 py-1 rounded-pill border border-light border-opacity-25">
+      <div class="d-flex align-items-center gap-2 bg-white bg-opacity-10 px-3 py-1 rounded-pill border border-light border-opacity-25">
         <i class="bi bi-person-circle fs-6"></i>
         <span class="fw-medium small"><?php echo htmlspecialchars(current_name()); ?></span>
         <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill ms-1" style="font-size:0.7rem"><?php echo htmlspecialchars(current_role()); ?></span>

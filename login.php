@@ -73,6 +73,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <small class="text-muted">Chaminda Construction Company</small>
       </div>
 
+      <?php if (!empty($_GET['registered'])): ?>
+        <div class="alert alert-success py-2"><i class="bi bi-check-circle-fill me-1"></i> Registration successful! Please log in with your credentials.</div>
+      <?php endif; ?>
       <?php if (!empty($_GET['timeout'])): ?>
         <div class="alert alert-warning py-2">You were logged out due to inactivity.</div>
       <?php endif; ?>
@@ -98,8 +101,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <button type="submit" class="btn btn-success w-100" style="background:var(--ccms-primary);border-color:var(--ccms-primary)">
           <i class="bi bi-box-arrow-in-right"></i> Login
         </button>
-        <div class="text-center mt-3">
+        <div class="d-flex justify-content-between align-items-center mt-3">
           <a href="/ccms/forgot_password.php" class="small text-muted">Forgot Password?</a>
+        </div>
+        <div class="text-center mt-3 pt-2 border-top border-secondary border-opacity-25">
+          <span class="text-muted small">Don't have an account?</span>
+          <a href="/ccms/register.php" class="btn btn-outline-success btn-sm w-100 mt-2" style="border-color:var(--ccms-primary);color:var(--ccms-primary)">
+            <i class="bi bi-person-plus"></i> Create New Account (Register)
+          </a>
         </div>
       </form>
     </div>
