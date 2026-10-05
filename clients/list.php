@@ -4,6 +4,19 @@ require_role(['Administrator','Project Manager']);
 $page_title = 'Clients';
 $page_actions = '<a href="/ccms/clients/create.php" class="btn btn-success"><i class="bi bi-plus-lg"></i> New Client</a>';
 
+// Auto-sync any registered Client users from `users` into `clients` table
+try {
+    $pdo->exec("
+        INSERT INTO clients (name, nic_number, date_of_birth, gender, email, phone, status)
+        SELECT u.full_name, u.nic_number, u.date_of_birth, u.gender, u.email, u.phone, 'active'
+        FROM users u
+        WHERE u.role = 'Client'
+        AND NOT EXISTS (
+            SELECT 1 FROM clients c WHERE (c.email IS NOT NULL AND c.email = u.email) OR (c.nic_number IS NOT NULL AND c.nic_number = u.nic_number)
+        )
+    ");
+} catch (Exception $e) {}
+
 $search = trim($_GET['q'] ?? '');
 $stmt = $pdo->prepare("SELECT * FROM clients WHERE name LIKE ? OR email LIKE ? OR nic_number LIKE ? ORDER BY created_at DESC");
 $like = "%$search%";
@@ -24,7 +37,7 @@ require_once __DIR__ . '/../includes/page_start.php';
     <?php if (!$clients): ?><tr><td colspan="7" class="text-center text-muted py-4">No clients found.</td></tr><?php endif; ?>
     <?php foreach ($clients as $c): ?>
       <tr>
-        <td><?php echo htmlspecialchars($c['name']); ?></td>
+        <td class="fw-semibold text-light"><?php echo htmlspecialchars($c['name']); ?></td>
         <td><code><?php echo htmlspecialchars($c['nic_number'] ?? '—'); ?></code></td>
         <td>
           <?php echo htmlspecialchars($c['gender'] ?? '—'); ?>

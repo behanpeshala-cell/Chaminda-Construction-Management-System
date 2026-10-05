@@ -79,6 +79,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         audit($pdo, 'REGISTER', 'users', $new_user_id);
 
+        // Auto-sync Client record if registered as Client
+        if ($role === 'Client') {
+            try {
+                $checkClient = $pdo->prepare("SELECT client_id FROM clients WHERE email=? OR nic_number=?");
+                $checkClient->execute([$email, $nic_number]);
+                if (!$checkClient->fetchColumn()) {
+                    $pdo->prepare("INSERT INTO clients (name, nic_number, date_of_birth, gender, email, phone, address, status) VALUES (?,?,?,?,?,?,'Registered Online Client','active')")
+                        ->execute([$full_name, $nic_number, $date_of_birth, $gender, $email, $phone]);
+                }
+            } catch (Exception $e) {}
+        }
+
         create_notification(
             $pdo,
             'New Account Registered',
