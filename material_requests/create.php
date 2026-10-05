@@ -1,6 +1,6 @@
 <?php
 require_once __DIR__ . '/../includes/auth.php';
-require_role(['Administrator','Site Staff','Project Manager']);
+require_role(['Administrator','Site Staff','Project Manager','Client']);
 $page_title = 'New Material Request';
 
 $projects = $pdo->query("SELECT project_id, project_name FROM projects WHERE status IN ('Planned','Ongoing') ORDER BY project_name")->fetchAll();
@@ -20,8 +20,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!$errors) {
         $pdo->prepare("INSERT INTO material_requests (project_id, material_id, quantity_requested, requested_by) VALUES (?,?,?,?)")
             ->execute([$project_id, $material_id, $qty, current_user_id()]);
-        audit($pdo, 'CREATE', 'material_requests', (int)$pdo->lastInsertId());
-        set_flash('success', 'Material request submitted for approval.');
+        
+        $reqId = (int)$pdo->lastInsertId();
+        audit($pdo, 'CREATE', 'material_requests', $reqId);
+
+        $mName = $pdo->query("SELECT name FROM materials WHERE material_id = $material_id")->fetchColumn() ?: 'Material';
+        $pName = $pdo->query("SELECT project_name FROM projects WHERE project_id = $project_id")->fetchColumn() ?: 'Project';
+
+        create_notification(
+            $pdo,
+            'New Material Request',
+            "Request #$reqId submitted: $qty units of '$mName' for '$pName'.",
+            'info',
+            '/ccms/material_requests/list.php'
+        );
+
         redirect('/ccms/material_requests/list.php');
     }
 }

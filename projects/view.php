@@ -1,10 +1,10 @@
 <?php
 require_once __DIR__ . '/../includes/auth.php';
-require_role(['Administrator','Project Manager','Site Staff','Client']);
+require_role(['Administrator','Project Manager','Site Staff','Client','Procurement Staff','Finance Officer']);
 $role = current_role();
 $id = (int)($_GET['id'] ?? 0);
 
-$stmt = $pdo->prepare("SELECT p.*, c.name AS client_name, c.email AS client_email, u.full_name AS pm_name
+$stmt = $pdo->prepare("SELECT p.*, c.name AS client_name, c.email AS client_email, c.nic_number AS client_nic, u.full_name AS pm_name
                         FROM projects p JOIN clients c ON c.client_id=p.client_id
                         LEFT JOIN users u ON u.user_id=p.project_manager_id
                         WHERE p.project_id=?");
@@ -14,9 +14,14 @@ if (!$project) { set_flash('danger','Project not found.'); redirect('/ccms/proje
 
 // Clients may only view their own project
 if ($role === 'Client') {
-    $stmt2 = $pdo->prepare("SELECT email FROM users WHERE user_id=?"); $stmt2->execute([current_user_id()]);
-    if ($stmt2->fetchColumn() !== $project['client_email']) {
-        http_response_code(403); die('Access denied: this is not your project.');
+    $uStmt = $pdo->prepare("SELECT email, nic_number FROM users WHERE user_id=?"); 
+    $uStmt->execute([current_user_id()]);
+    $uData = $uStmt->fetch();
+    $uEmail = $uData['email'] ?? '';
+    $uNic = $uData['nic_number'] ?? '';
+
+    if ($uEmail !== $project['client_email'] && ($uNic === '' || $uNic !== $project['client_nic'])) {
+        http_response_code(403); die('Access denied: this is not your assigned project.');
     }
 }
 
@@ -48,7 +53,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_progress'])) {
             ->execute([$id, $newProgress, $note, $justification ?: null, current_user_id()]);
         $pdo->commit();
         audit($pdo, 'PROGRESS_UPDATE', 'projects', $id);
-        set_flash('success', 'Progress updated.');
+
+        create_notification(
+            $pdo,
+            'Project Progress Updated',
+            "Project '{$project['project_name']}' progress updated to {$newProgress}% by " . current_name() . ".",
+            'success',
+            "/ccms/projects/view.php?id=$id"
+        );
+
         redirect('/ccms/projects/view.php?id='.$id);
     }
 }

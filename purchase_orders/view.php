@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/../includes/auth.php';
-require_role(['Administrator','Procurement Staff']);
+require_role(['Administrator','Procurement Staff','Project Manager','Site Staff','Finance Officer']);
+$role = current_role();
 $id = (int)($_GET['id'] ?? 0);
 
 $stmt = $pdo->prepare("SELECT po.*, s.name AS supplier_name, u.full_name AS created_by_name
@@ -24,28 +25,55 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         redirect('/ccms/purchase_orders/view.php?id='.$id);
     }
 
+    if (!in_array($role, ['Administrator','Procurement Staff','Project Manager'])) {
+        set_flash('danger', 'You do not have permission to modify purchase orders.');
+        redirect('/ccms/purchase_orders/view.php?id='.$id);
+    }
+
+    $poCode = 'PO-' . str_pad($id,4,'0',STR_PAD_LEFT);
+
     if ($action === 'approve' && $po['status'] === 'Pending') {
         $pdo->prepare("UPDATE purchase_orders SET status='Approved' WHERE po_id=?")->execute([$id]);
         audit($pdo, 'PO_APPROVED', 'purchase_orders', $id);
-        set_flash('success', 'Purchase order approved.');
+        
+        create_notification(
+            $pdo,
+            'Purchase Order Approved',
+            "Purchase Order $poCode approved successfully.",
+            'success',
+            "/ccms/purchase_orders/view.php?id=$id"
+        );
     } elseif ($action === 'cancel' && in_array($po['status'], ['Pending','Approved'])) {
         $pdo->prepare("UPDATE purchase_orders SET status='Cancelled' WHERE po_id=?")->execute([$id]);
         audit($pdo, 'PO_CANCELLED', 'purchase_orders', $id);
-        set_flash('success', 'Purchase order cancelled.');
+
+        create_notification(
+            $pdo,
+            'Purchase Order Cancelled',
+            "Purchase Order $poCode was cancelled.",
+            'warning',
+            "/ccms/purchase_orders/view.php?id=$id"
+        );
     } elseif ($action === 'deliver' && $po['status'] === 'Approved') {
-        // Delivered POs automatically trigger a stock-in transaction for every line item
         $pdo->beginTransaction();
         foreach ($items as $it) {
             $pdo->prepare("INSERT INTO inventory (material_id, quantity_on_hand) VALUES (?,?)
                             ON DUPLICATE KEY UPDATE quantity_on_hand = quantity_on_hand + VALUES(quantity_on_hand)")
                 ->execute([$it['material_id'], $it['quantity']]);
             $pdo->prepare("INSERT INTO stock_transactions (material_id, type, quantity, reference, created_by) VALUES (?, 'IN', ?, ?, ?)")
-                ->execute([$it['material_id'], $it['quantity'], 'PO-' . str_pad($id,4,'0',STR_PAD_LEFT), current_user_id()]);
+                ->execute([$it['material_id'], $it['quantity'], $poCode, current_user_id()]);
         }
         $pdo->prepare("UPDATE purchase_orders SET status='Delivered', delivered_at=NOW() WHERE po_id=?")->execute([$id]);
         $pdo->commit();
         audit($pdo, 'PO_DELIVERED', 'purchase_orders', $id);
-        set_flash('success', 'Purchase order marked as delivered — stock levels updated automatically.');
+
+        create_notification(
+            $pdo,
+            'Purchase Order Delivered',
+            "Purchase Order $poCode delivered! Inventory stock updated automatically.",
+            'success',
+            "/ccms/purchase_orders/view.php?id=$id"
+        );
     }
     redirect('/ccms/purchase_orders/view.php?id='.$id);
 }
@@ -63,14 +91,16 @@ $badge = ['Pending'=>'secondary','Approved'=>'info','Delivered'=>'success','Canc
     </div>
     <div class="align-self-start d-flex align-items-center gap-2">
       <a href="/ccms/reports/export_pdf.php?type=po_single&id=<?php echo $id; ?>" class="btn btn-sm btn-outline-success"><i class="bi bi-file-earmark-pdf"></i> Download PDF Invoice</a>
-      <?php if ($po['status'] === 'Pending'): ?>
-        <form method="post" class="d-inline"><input type="hidden" name="csrf_token" value="<?php echo csrf_token(); ?>"><input type="hidden" name="action" value="approve"><button class="btn btn-sm btn-success"><i class="bi bi-check-lg"></i> Approve</button></form>
-        <form method="post" class="d-inline" data-confirm="Cancel this purchase order?"><input type="hidden" name="csrf_token" value="<?php echo csrf_token(); ?>"><input type="hidden" name="action" value="cancel"><button class="btn btn-sm btn-outline-danger"><i class="bi bi-x-lg"></i> Cancel</button></form>
-      <?php elseif ($po['status'] === 'Approved'): ?>
-        <form method="post" class="d-inline" data-confirm="Mark as delivered? This will add stock automatically and cannot be undone."><input type="hidden" name="csrf_token" value="<?php echo csrf_token(); ?>"><input type="hidden" name="action" value="deliver"><button class="btn btn-sm btn-success"><i class="bi bi-truck"></i> Mark Delivered</button></form>
-        <form method="post" class="d-inline" data-confirm="Cancel this purchase order?"><input type="hidden" name="csrf_token" value="<?php echo csrf_token(); ?>"><input type="hidden" name="action" value="cancel"><button class="btn btn-sm btn-outline-danger"><i class="bi bi-x-lg"></i> Cancel</button></form>
-      <?php elseif ($po['status'] === 'Delivered'): ?>
-        <span class="text-muted small"><i class="bi bi-lock"></i> Delivered POs cannot be modified.</span>
+      <?php if (in_array($role, ['Administrator','Procurement Staff','Project Manager'])): ?>
+        <?php if ($po['status'] === 'Pending'): ?>
+          <form method="post" class="d-inline"><input type="hidden" name="csrf_token" value="<?php echo csrf_token(); ?>"><input type="hidden" name="action" value="approve"><button class="btn btn-sm btn-success"><i class="bi bi-check-lg"></i> Approve</button></form>
+          <form method="post" class="d-inline" data-confirm="Cancel this purchase order?"><input type="hidden" name="csrf_token" value="<?php echo csrf_token(); ?>"><input type="hidden" name="action" value="cancel"><button class="btn btn-sm btn-outline-danger"><i class="bi bi-x-lg"></i> Cancel</button></form>
+        <?php elseif ($po['status'] === 'Approved'): ?>
+          <form method="post" class="d-inline" data-confirm="Mark as delivered? This will add stock automatically and cannot be undone."><input type="hidden" name="csrf_token" value="<?php echo csrf_token(); ?>"><input type="hidden" name="action" value="deliver"><button class="btn btn-sm btn-success"><i class="bi bi-truck"></i> Mark Delivered</button></form>
+          <form method="post" class="d-inline" data-confirm="Cancel this purchase order?"><input type="hidden" name="csrf_token" value="<?php echo csrf_token(); ?>"><input type="hidden" name="action" value="cancel"><button class="btn btn-sm btn-outline-danger"><i class="bi bi-x-lg"></i> Cancel</button></form>
+        <?php elseif ($po['status'] === 'Delivered'): ?>
+          <span class="text-muted small"><i class="bi bi-lock"></i> Delivered POs cannot be modified.</span>
+        <?php endif; ?>
       <?php endif; ?>
     </div>
   </div>

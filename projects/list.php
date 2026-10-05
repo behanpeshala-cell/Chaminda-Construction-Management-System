@@ -1,6 +1,6 @@
 <?php
 require_once __DIR__ . '/../includes/auth.php';
-require_role(['Administrator','Project Manager','Site Staff','Client']);
+require_role(['Administrator','Project Manager','Site Staff','Client','Procurement Staff','Finance Officer']);
 $page_title = 'Projects';
 $role = current_role();
 $page_actions = in_array($role, ['Administrator','Project Manager'])
@@ -9,9 +9,9 @@ $page_actions = in_array($role, ['Administrator','Project Manager'])
 $search = trim($_GET['q'] ?? '');
 if ($role === 'Client') {
     $stmt = $pdo->prepare("SELECT p.*, c.name AS client_name FROM projects p JOIN clients c ON c.client_id=p.client_id
-                            WHERE c.email = (SELECT email FROM users WHERE user_id=?) AND p.project_name LIKE ?
+                            WHERE (c.email = (SELECT email FROM users WHERE user_id=?) OR c.nic_number = (SELECT nic_number FROM users WHERE user_id=?)) AND p.project_name LIKE ?
                             ORDER BY p.created_at DESC");
-    $stmt->execute([current_user_id(), "%$search%"]);
+    $stmt->execute([current_user_id(), current_user_id(), "%$search%"]);
 } else {
     $stmt = $pdo->prepare("SELECT p.*, c.name AS client_name FROM projects p JOIN clients c ON c.client_id=p.client_id
                             WHERE p.project_name LIKE ? ORDER BY p.created_at DESC");
@@ -28,12 +28,12 @@ require_once __DIR__ . '/../includes/page_start.php';
   </form>
   <div class="table-responsive">
   <table class="table table-hover align-middle">
-    <thead><tr><th>Project</th><th>Client</th><th>Type</th><th>Location</th><th>Budget (LKR)</th><th>Status</th><th>Progress</th><th></th></tr></thead>
+    <thead><tr><th>Project</th><th>Client</th><th>Type</th><th>Location</th><th>Budget (LKR)</th><th>Status</th><th>Progress</th><th>Action</th></tr></thead>
     <tbody>
     <?php if (!$projects): ?><tr><td colspan="8" class="text-center text-muted py-4">No projects found.</td></tr><?php endif; ?>
     <?php foreach ($projects as $p): ?>
       <tr>
-        <td><?php echo htmlspecialchars($p['project_name']); ?></td>
+        <td class="fw-semibold text-light"><?php echo htmlspecialchars($p['project_name']); ?></td>
         <td><?php echo htmlspecialchars($p['client_name']); ?></td>
         <td><?php echo htmlspecialchars($p['project_type']); ?></td>
         <td><?php echo htmlspecialchars($p['location']); ?></td>
@@ -44,7 +44,7 @@ require_once __DIR__ . '/../includes/page_start.php';
           <small><?php echo (int)$p['progress_percent']; ?>%</small>
         </td>
         <td>
-          <a href="/ccms/projects/view.php?id=<?php echo $p['project_id']; ?>" class="btn btn-sm btn-outline-secondary"><i class="bi bi-eye"></i></a>
+          <a href="/ccms/projects/view.php?id=<?php echo $p['project_id']; ?>" class="btn btn-sm btn-outline-secondary"><i class="bi bi-eye"></i> View</a>
           <?php if (in_array($role, ['Administrator','Project Manager'])): ?>
           <a href="/ccms/projects/edit.php?id=<?php echo $p['project_id']; ?>" class="btn btn-sm btn-outline-primary"><i class="bi bi-pencil"></i></a>
           <?php endif; ?>

@@ -1,17 +1,33 @@
 <?php
 require_once __DIR__ . '/../includes/auth.php';
-require_role(['Administrator','Site Staff','Project Manager']);
+require_role(['Administrator','Site Staff','Project Manager','Procurement Staff','Client']);
 $role = current_role();
 $page_title = 'Material Requests';
-$page_actions = '<a href="/ccms/material_requests/create.php" class="btn btn-success"><i class="bi bi-plus-lg"></i> New Request</a>';
+$page_actions = in_array($role, ['Administrator','Site Staff','Project Manager','Client'])
+  ? '<a href="/ccms/material_requests/create.php" class="btn btn-success"><i class="bi bi-plus-lg"></i> New Request</a>' : '';
 
-$requests = $pdo->query("SELECT r.*, p.project_name, m.name AS material_name, m.unit, u1.full_name AS requested_by_name, u2.full_name AS approved_by_name
+if ($role === 'Client') {
+    $stmt = $pdo->prepare("SELECT r.*, p.project_name, m.name AS material_name, m.unit, u1.full_name AS requested_by_name, u2.full_name AS approved_by_name
                           FROM material_requests r
                           JOIN projects p ON p.project_id=r.project_id
+                          JOIN clients c ON c.client_id=p.client_id
                           JOIN materials m ON m.material_id=r.material_id
                           JOIN users u1 ON u1.user_id=r.requested_by
                           LEFT JOIN users u2 ON u2.user_id=r.approved_by
-                          ORDER BY r.created_at DESC")->fetchAll();
+                          WHERE c.email = (SELECT email FROM users WHERE user_id=?) OR c.nic_number = (SELECT nic_number FROM users WHERE user_id=?)
+                          ORDER BY r.created_at DESC");
+    $stmt->execute([current_user_id(), current_user_id()]);
+    $requests = $stmt->fetchAll();
+} else {
+    $requests = $pdo->query("SELECT r.*, p.project_name, m.name AS material_name, m.unit, u1.full_name AS requested_by_name, u2.full_name AS approved_by_name
+                              FROM material_requests r
+                              JOIN projects p ON p.project_id=r.project_id
+                              JOIN materials m ON m.material_id=r.material_id
+                              JOIN users u1 ON u1.user_id=r.requested_by
+                              LEFT JOIN users u2 ON u2.user_id=r.approved_by
+                              ORDER BY r.created_at DESC")->fetchAll();
+}
+
 require_once __DIR__ . '/../includes/page_start.php';
 ?>
 <div class="card p-3">
@@ -41,13 +57,13 @@ require_once __DIR__ . '/../includes/page_start.php';
               <input type="hidden" name="csrf_token" value="<?php echo csrf_token(); ?>">
               <input type="hidden" name="id" value="<?php echo $r['request_id']; ?>">
               <input type="hidden" name="decision" value="Approved">
-              <button class="btn btn-sm btn-outline-success"><i class="bi bi-check-lg"></i></button>
+              <button class="btn btn-sm btn-outline-success" title="Approve Request"><i class="bi bi-check-lg"></i></button>
             </form>
             <form action="/ccms/material_requests/decide.php" method="post" class="d-inline">
               <input type="hidden" name="csrf_token" value="<?php echo csrf_token(); ?>">
               <input type="hidden" name="id" value="<?php echo $r['request_id']; ?>">
               <input type="hidden" name="decision" value="Rejected">
-              <button class="btn btn-sm btn-outline-danger"><i class="bi bi-x-lg"></i></button>
+              <button class="btn btn-sm btn-outline-danger" title="Reject Request"><i class="bi bi-x-lg"></i></button>
             </form>
           <?php elseif ($r['status'] === 'Approved'): ?>
             <form action="/ccms/material_requests/issue.php" method="post" class="d-inline" data-confirm="Issue this material and deduct stock?">

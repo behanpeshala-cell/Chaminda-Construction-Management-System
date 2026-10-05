@@ -1,9 +1,9 @@
 <?php
 require_once __DIR__ . '/../includes/auth.php';
-require_role(['Administrator','Site Staff','Project Manager']);
+require_role(['Administrator','Site Staff','Project Manager','Procurement Staff']);
 $role = current_role();
 $page_title = 'Inventory / Stock Movements';
-$page_actions = in_array($role, ['Administrator','Site Staff'])
+$page_actions = in_array($role, ['Administrator','Site Staff','Project Manager'])
   ? '<a href="/ccms/inventory/move.php" class="btn btn-success"><i class="bi bi-arrow-left-right"></i> Record Stock Movement</a>' : '';
 
 $txns = $pdo->query("SELECT t.*, m.name AS material_name, m.unit, u.full_name AS by_user, p.project_name
@@ -22,11 +22,11 @@ require_once __DIR__ . '/../includes/page_start.php';
     <?php if (!$txns): ?><tr><td colspan="6" class="text-center text-muted py-4">No stock movements recorded yet.</td></tr><?php endif; ?>
     <?php foreach ($txns as $t): ?>
       <tr>
-        <td><?php echo $t['created_at']; ?></td>
-        <td><?php echo htmlspecialchars($t['material_name']); ?></td>
+        <td class="small text-muted font-monospace"><?php echo $t['created_at']; ?></td>
+        <td class="fw-semibold text-light"><?php echo htmlspecialchars($t['material_name']); ?></td>
         <td><?php echo $t['type']==='IN' ? '<span class="badge bg-success">Stock In</span>' : '<span class="badge bg-danger">Stock Out</span>'; ?></td>
-        <td><?php echo (int)$t['quantity']; ?> <?php echo htmlspecialchars($t['unit']); ?></td>
-        <td><?php echo htmlspecialchars($t['project_name'] ?? $t['reference']); ?></td>
+        <td class="fw-bold font-monospace"><?php echo (int)$t['quantity']; ?> <?php echo htmlspecialchars($t['unit']); ?></td>
+        <td><?php echo htmlspecialchars($t['project_name'] ?? $t['reference'] ?? '-'); ?></td>
         <td><?php echo htmlspecialchars($t['by_user']); ?></td>
       </tr>
     <?php endforeach; ?>

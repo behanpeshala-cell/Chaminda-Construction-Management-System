@@ -1,8 +1,9 @@
 <?php
 require_once __DIR__ . '/../includes/auth.php';
-require_role(['Administrator','Site Staff']);
+require_role(['Administrator','Site Staff','Project Manager','Procurement Staff']);
 $page_title = 'New Material';
 $errors = [];
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     csrf_check();
     $name = trim($_POST['name'] ?? '');
@@ -27,7 +28,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         $pdo->commit();
         audit($pdo,'CREATE','materials',$material_id);
-        set_flash('success','Material added to catalogue.');
+
+        create_notification(
+            $pdo,
+            'New Material Added',
+            "Material '$name' (Unit: $unit, Price: LKR " . number_format($price,2) . ") added to catalogue.",
+            'success',
+            '/ccms/materials/list.php'
+        );
+
         redirect('/ccms/materials/list.php');
     }
 }

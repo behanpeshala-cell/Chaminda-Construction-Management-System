@@ -1,8 +1,9 @@
 <?php
 require_once __DIR__ . '/../includes/auth.php';
-require_role(['Administrator','Procurement Staff']);
+require_role(['Administrator','Procurement Staff','Project Manager']);
 $page_title = 'New Supplier';
 $errors = [];
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     csrf_check();
     $name = trim($_POST['name'] ?? '');
@@ -10,6 +11,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $phone = trim($_POST['phone'] ?? '');
     $email = trim($_POST['email'] ?? '');
     $address = trim($_POST['address'] ?? '');
+
     if ($name === '') $errors[] = 'Supplier name is required.';
     if ($email !== '' && !filter_var($email, FILTER_VALIDATE_EMAIL)) {
         $errors[] = 'Please enter a valid email address.';
@@ -17,11 +19,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($phone !== '' && (!preg_match('/^\+?[0-9\s\-\(\)]{9,15}$/', $phone) || strlen(preg_replace('/\D/', '', $phone)) < 9)) {
         $errors[] = 'Please enter a valid phone number (9-15 digits).';
     }
+
     if (!$errors) {
         $pdo->prepare("INSERT INTO suppliers (name, contact_person, phone, email, address) VALUES (?,?,?,?,?)")
             ->execute([$name,$contact,$phone,$email,$address]);
-        audit($pdo,'CREATE','suppliers',(int)$pdo->lastInsertId());
-        set_flash('success','Supplier added.');
+        
+        $supId = (int)$pdo->lastInsertId();
+        audit($pdo, 'CREATE', 'suppliers', $supId);
+
+        create_notification(
+            $pdo,
+            'New Supplier Added',
+            "Supplier '$name' registered successfully.",
+            'success',
+            '/ccms/suppliers/list.php'
+        );
+
         redirect('/ccms/suppliers/list.php');
     }
 }

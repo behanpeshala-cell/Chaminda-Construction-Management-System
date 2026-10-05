@@ -1,6 +1,6 @@
 <?php
 require_once __DIR__ . '/../includes/auth.php';
-require_role(['Administrator','Procurement Staff']);
+require_role(['Administrator','Procurement Staff','Project Manager']);
 $page_title = 'New Purchase Order';
 
 $suppliers = $pdo->query("SELECT supplier_id, name FROM suppliers WHERE status='active' ORDER BY name")->fetchAll();
@@ -39,7 +39,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         $pdo->commit();
         audit($pdo, 'CREATE', 'purchase_orders', $po_id);
-        set_flash('success', "Purchase order PO-" . str_pad($po_id,4,'0',STR_PAD_LEFT) . " created.");
+
+        $sName = $pdo->query("SELECT name FROM suppliers WHERE supplier_id = $supplier_id")->fetchColumn() ?: 'Supplier';
+
+        create_notification(
+            $pdo,
+            'New Purchase Order Created',
+            "Purchase Order PO-" . str_pad($po_id,4,'0',STR_PAD_LEFT) . " created for supplier $sName.",
+            'success',
+            "/ccms/purchase_orders/view.php?id=$po_id"
+        );
+
         redirect('/ccms/purchase_orders/view.php?id=' . $po_id);
     }
 }
