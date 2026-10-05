@@ -23,7 +23,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // NIC Validation
     if ($nic_number === '') {
         $errors[] = 'NIC number is required.';
-    } elseif (!preg_match('/^([0-9]{9}[vVxX]|[0-9]{12})$/', $nic_number)) {
+    } elseif (!validate_sri_lankan_nic($nic_number)) {
         $errors[] = 'Please enter a valid Sri Lankan NIC (9 digits + V/X or 12 digits).';
     } else {
         $dupNic = $pdo->prepare("SELECT COUNT(*) FROM clients WHERE nic_number=? AND client_id != ?");
@@ -55,7 +55,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $pdo->prepare("UPDATE clients SET name=?, nic_number=?, date_of_birth=?, gender=?, email=?, phone=?, address=? WHERE client_id=?")
             ->execute([$name,$nic_number,$date_of_birth,$gender,$email,$phone,$address,$id]);
         audit($pdo,'UPDATE','clients',$id);
-        set_flash('success','Client updated.');
+        
+        create_notification(
+            $pdo,
+            'Client Profile Updated',
+            "Client '$name' profile updated successfully.",
+            'success',
+            '/ccms/clients/list.php'
+        );
+
         redirect('/ccms/clients/list.php');
     }
 }

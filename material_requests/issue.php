@@ -27,7 +27,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $pdo->prepare("UPDATE material_requests SET status='Issued' WHERE request_id=?")->execute([$id]);
             $pdo->commit();
             audit($pdo, 'MATERIAL_REQUEST_ISSUED', 'material_requests', $id);
-            set_flash('success', 'Material issued and stock updated.');
+
+            create_notification(
+                $pdo,
+                'Material Issued to Site',
+                "Material Request #$id (" . $req['quantity_requested'] . " units) has been issued to the site.",
+                'success',
+                '/ccms/material_requests/list.php'
+            );
         }
     }
 }

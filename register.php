@@ -36,7 +36,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // NIC Validation
     if ($nic_number === '') {
         $errors[] = 'NIC number is required.';
-    } elseif (!preg_match('/^([0-9]{9}[vVxX]|[0-9]{12})$/', $nic_number)) {
+    } elseif (!validate_sri_lankan_nic($nic_number)) {
         $errors[] = 'Please enter a valid Sri Lankan NIC (9 digits + V/X or 12 digits).';
     }
 
@@ -79,6 +79,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         audit($pdo, 'REGISTER', 'users', $new_user_id);
 
+        create_notification(
+            $pdo,
+            'New Account Registered',
+            "User '$full_name' ($username) registered as $role. NIC: $nic_number.",
+            'info',
+            '/ccms/users/list.php'
+        );
+
+        set_flash('success', 'Registration successful! You may now log in.');
         redirect('/ccms/login.php?registered=1');
     }
 }

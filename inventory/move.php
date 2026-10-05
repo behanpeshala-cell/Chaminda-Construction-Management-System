@@ -40,7 +40,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             ->execute([$material_id, $type, $qty, $reference, $project_id, current_user_id()]);
         $pdo->commit();
         audit($pdo, 'STOCK_' . $type, 'stock_transactions', $material_id);
-        set_flash('success', 'Stock movement recorded.');
+
+        $mStmt = $pdo->prepare("SELECT name, unit FROM materials WHERE material_id = ?");
+        $mStmt->execute([$material_id]);
+        $mInfo = $mStmt->fetch();
+        $matName = $mInfo['name'] ?? 'Material';
+        $matUnit = $mInfo['unit'] ?? 'units';
+
+        create_notification(
+            $pdo,
+            'Stock Movement Recorded',
+            "Stock $type: $qty $matUnit of '$matName' " . ($type === 'IN' ? 'added to inventory.' : 'issued to project.'),
+            'info',
+            '/ccms/inventory/list.php'
+        );
+
         redirect('/ccms/inventory/list.php');
     }
 }
@@ -52,7 +66,7 @@ require_once __DIR__ . '/../includes/page_start.php';
     <input type="hidden" name="csrf_token" value="<?php echo csrf_token(); ?>">
     <div class="mb-3">
       <label class="form-label required">Material</label>
-      <select name="material_id" class="form-select" required onchange="showQty(this)">
+      <select name="material_id" class="form-select" required>
         <option value="">-- Select material --</option>
         <?php foreach ($materials as $m): ?>
           <option value="<?php echo $m['material_id']; ?>" data-qty="<?php echo $m['qty']; ?>" data-unit="<?php echo htmlspecialchars($m['unit']); ?>">

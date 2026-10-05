@@ -614,3 +614,50 @@ a.text-muted:hover, .text-muted a:hover {
 .progress-bar {
   box-shadow: 0 0 10px currentColor;
 }
+
+/* ---- Toast Popup Notifications ---- */
+.ccms-toast {
+  background: #0f172a !important;
+  border: 1px solid rgba(16, 185, 129, 0.4) !important;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.6), 0 0 20px rgba(16, 185, 129, 0.2) !important;
+  border-radius: 0.75rem !important;
+  color: #f8fafc !important;
+  backdrop-filter: blur(12px);
+}
+.ccms-toast-success { border-color: var(--neon-emerald) !important; box-shadow: 0 0 20px var(--neon-emerald-glow) !important; }
+.ccms-toast-info { border-color: var(--neon-cyan) !important; box-shadow: 0 0 20px var(--neon-cyan-glow) !important; }
+.ccms-toast-warning { border-color: var(--neon-amber) !important; box-shadow: 0 0 20px var(--neon-amber-glow) !important; }
+.ccms-toast-danger { border-color: var(--neon-rose) !important; box-shadow: 0 0 20px var(--neon-rose-glow) !important; }
+
+/* ---- Navbar Notification Dropdown ---- */
+.notif-item {
+  transition: background 0.15s ease;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  padding: 0.75rem 1rem;
+  display: block;
+  text-decoration: none !important;
+  color: inherit !important;
+}
+.notif-item:hover {
+  background: rgba(16, 185, 129, 0.08) !important;
+}
+.notif-item.unread {
+  background: rgba(16, 185, 129, 0.12);
+}
+.notif-badge-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: var(--neon-cyan);
+  box-shadow: 0 0 8px var(--neon-cyan);
+  display: inline-block;
+}
+
+/* ---- Bank Receipt Styling ---- */
+.receipt-box {
+  background: #0d1322;
+  border: 2px dashed rgba(16, 185, 129, 0.3);
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+}
+

@@ -29,7 +29,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // NIC Validation
     if ($nic_number === '') {
         $errors[] = 'NIC number is required.';
-    } elseif (!preg_match('/^([0-9]{9}[vVxX]|[0-9]{12})$/', $nic_number)) {
+    } elseif (!validate_sri_lankan_nic($nic_number)) {
         $errors[] = 'Please enter a valid Sri Lankan NIC (9 digits + V/X or 12 digits).';
     }
 
@@ -58,8 +58,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $hash = password_hash($password, PASSWORD_BCRYPT);
         $stmt = $pdo->prepare("INSERT INTO users (full_name, username, email, phone, nic_number, date_of_birth, gender, password_hash, role) VALUES (?,?,?,?,?,?,?,?,?)");
         $stmt->execute([$full_name, $username, $email, $phone, $nic_number, $date_of_birth, $gender, $hash, $role]);
-        audit($pdo, 'CREATE', 'users', (int)$pdo->lastInsertId());
-        set_flash('success', 'User created successfully.');
+        $newUserId = (int)$pdo->lastInsertId();
+        audit($pdo, 'CREATE', 'users', $newUserId);
+        
+        create_notification(
+            $pdo,
+            'New User Account Created',
+            "User account '$full_name' ($username) created with role $role. NIC: $nic_number.",
+            'success',
+            '/ccms/users/list.php'
+        );
+
         redirect('/ccms/users/list.php');
     }
 }
@@ -119,12 +128,11 @@ require_once __DIR__ . '/../includes/page_start.php';
     <div class="mb-3">
       <label class="form-label required">Role</label>
       <select name="role" class="form-select" required>
-          <option value="">-- Select role --</option>
-          <?php foreach ($roles as $r): ?>
-            <option value="<?php echo $r; ?>" <?php echo (($_POST['role'] ?? '') === $r) ? 'selected' : ''; ?>><?php echo $r; ?></option>
-          <?php endforeach; ?>
-        </select>
-      </div>
+        <option value="">-- Select role --</option>
+        <?php foreach ($roles as $r): ?>
+          <option value="<?php echo $r; ?>" <?php echo (($_POST['role'] ?? '') === $r) ? 'selected' : ''; ?>><?php echo $r; ?></option>
+        <?php endforeach; ?>
+      </select>
     </div>
 
     <div class="mb-3">

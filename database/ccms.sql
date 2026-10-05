@@ -36,6 +36,7 @@ CREATE TABLE clients (
 CREATE TABLE employees (
     employee_id  INT AUTO_INCREMENT PRIMARY KEY,
     full_name    VARCHAR(100) NOT NULL,
+    nic_number   VARCHAR(20)  NULL,
     role_title   VARCHAR(50),
     phone        VARCHAR(20),
     email        VARCHAR(100),
@@ -153,13 +154,20 @@ CREATE TABLE expenses (
 ) ENGINE=InnoDB;
 
 CREATE TABLE payments (
-    payment_id    INT AUTO_INCREMENT PRIMARY KEY,
-    project_id     INT NOT NULL,
-    amount         DECIMAL(14,2) NOT NULL,
-    payment_type   ENUM('Client Payment','Supplier Payment','Other') NOT NULL,
-    payment_date   DATE NOT NULL,
-    recorded_by    INT NOT NULL,
-    created_at     TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    payment_id      INT AUTO_INCREMENT PRIMARY KEY,
+    project_id       INT NOT NULL,
+    amount           DECIMAL(14,2) NOT NULL,
+    payment_method   ENUM('Bank Transfer', 'Bank Deposit', 'Cheque', 'Cash', 'Online Payment') NOT NULL DEFAULT 'Bank Transfer',
+    bank_name        VARCHAR(100) NULL,
+    account_number   VARCHAR(50) NULL,
+    reference_number VARCHAR(100) NULL,
+    slip_path        VARCHAR(255) NULL,
+    notes            TEXT NULL,
+    payment_type     ENUM('Client Payment','Supplier Payment','Other') NOT NULL,
+    payment_date     DATE NOT NULL,
+    status           ENUM('Verified', 'Pending', 'Rejected') NOT NULL DEFAULT 'Verified',
+    recorded_by      INT NOT NULL,
+    created_at       TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (project_id) REFERENCES projects(project_id),
     FOREIGN KEY (recorded_by) REFERENCES users(user_id)
 ) ENGINE=InnoDB;
@@ -197,7 +205,6 @@ CREATE TABLE purchase_order_items (
     FOREIGN KEY (material_id) REFERENCES materials(material_id)
 ) ENGINE=InnoDB;
 
-
 CREATE TABLE audit_log (
     log_id      INT AUTO_INCREMENT PRIMARY KEY,
     user_id     INT NULL,
@@ -208,6 +215,19 @@ CREATE TABLE audit_log (
     FOREIGN KEY (user_id) REFERENCES users(user_id)
 ) ENGINE=InnoDB;
 
+CREATE TABLE notifications (
+    notification_id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id         INT NULL,
+    title           VARCHAR(150) NOT NULL,
+    message         TEXT NOT NULL,
+    type            ENUM('success', 'info', 'warning', 'danger') NOT NULL DEFAULT 'info',
+    is_read         TINYINT(1) NOT NULL DEFAULT 0,
+    link            VARCHAR(255) NULL,
+    created_by      INT NULL,
+    created_at      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
+    FOREIGN KEY (created_by) REFERENCES users(user_id) ON DELETE SET NULL
+) ENGINE=InnoDB;
 
 INSERT INTO users (full_name, username, email, password_hash, role, status)
 VALUES ('System Administrator', 'admin', 'admin@chaminda.lk',

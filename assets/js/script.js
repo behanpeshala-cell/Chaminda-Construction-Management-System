@@ -16,7 +16,7 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   });
 
-  // Auto-dismiss alerts after 6s
+  // Auto-dismiss standard alerts after 6s
   document.querySelectorAll('.alert').forEach(function (a) {
     setTimeout(function () {
       var alert = bootstrap.Alert.getOrCreateInstance(a);
@@ -25,17 +25,145 @@ document.addEventListener('DOMContentLoaded', function () {
   });
 
   // -------------------------------------------------------------
-  // 1. PREVENT NEGATIVE NUMBERS (-) IN BUDGET & NUMERIC INPUTS
+  // 1. POPUP TOAST NOTIFICATIONS
+  // -------------------------------------------------------------
+  window.showToast = function (title, message, type) {
+    type = type || 'success';
+    var container = document.getElementById('toastContainer');
+    if (!container) return;
+
+    var iconClass = 'bi-check-circle-fill text-success';
+    var toastClass = 'ccms-toast-success';
+    if (type === 'danger' || type === 'error') {
+      iconClass = 'bi-x-circle-fill text-danger';
+      toastClass = 'ccms-toast-danger';
+    } else if (type === 'warning') {
+      iconClass = 'bi-exclamation-triangle-fill text-warning';
+      toastClass = 'ccms-toast-warning';
+    } else if (type === 'info') {
+      iconClass = 'bi-info-circle-fill text-info';
+      toastClass = 'ccms-toast-info';
+    }
+
+    var toastId = 'toast-' + Date.now();
+    var html = `
+      <div id="${toastId}" class="toast ccms-toast ${toastClass} show fade mb-2" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="toast-header bg-transparent border-0 text-white d-flex align-items-center justify-content-between pb-0">
+          <div class="d-flex align-items-center gap-2">
+            <i class="bi ${iconClass} fs-5"></i>
+            <strong class="me-auto text-light fw-bold">${title}</strong>
+          </div>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+        <div class="toast-body small text-slate-300 pt-2 pb-3">
+          ${message}
+        </div>
+      </div>
+    `;
+
+    container.insertAdjacentHTML('beforeend', html);
+    var elem = document.getElementById(toastId);
+    var bsToast = new bootstrap.Toast(elem, { delay: 6000 });
+    bsToast.show();
+
+    elem.addEventListener('hidden.bs.toast', function () {
+      elem.remove();
+    });
+  };
+
+  // Check if session flash toast is present
+  if (window.SESSION_TOAST && window.SESSION_TOAST.message) {
+    var t = window.SESSION_TOAST;
+    showToast(t.title || 'Task Completed', t.message, t.type || 'success');
+  }
+
+  // -------------------------------------------------------------
+  // 2. NAVBAR NOTIFICATION DROPDOWN & LIVE SYSTEM ACTIVITIES
+  // -------------------------------------------------------------
+  function loadNavbarNotifications() {
+    var notifList = document.getElementById('notificationList');
+    var notifBadge = document.getElementById('notif-badge');
+    if (!notifList) return;
+
+    fetch('/ccms/notifications_api.php?action=fetch')
+      .then(function (res) { return res.json(); })
+      .then(function (data) {
+        if (!data.success) return;
+
+        // Update unread badge count
+        if (data.unread_count > 0) {
+          notifBadge.textContent = data.unread_count > 99 ? '99+' : data.unread_count;
+          notifBadge.classList.remove('d-none');
+        } else {
+          notifBadge.classList.add('d-none');
+        }
+
+        if (!data.notifications || data.notifications.length === 0) {
+          notifList.innerHTML = '<div class="text-center py-4 text-muted small"><i class="bi bi-bell-slash fs-4 d-block mb-1 text-secondary"></i>No recent notifications.</div>';
+          return;
+        }
+
+        var html = '';
+        data.notifications.forEach(function (n) {
+          var icon = 'bi-check-circle-fill text-success';
+          if (n.type === 'danger') icon = 'bi-x-circle-fill text-danger';
+          else if (n.type === 'warning') icon = 'bi-exclamation-triangle-fill text-warning';
+          else if (n.type === 'info') icon = 'bi-info-circle-fill text-info';
+
+          var unreadClass = parseInt(n.is_read) === 0 ? 'unread' : '';
+          var unreadDot = parseInt(n.is_read) === 0 ? '<span class="notif-badge-dot ms-auto"></span>' : '';
+          var link = n.link ? n.link : '#';
+
+          html += `
+            <a href="${link}" class="notif-item ${unreadClass}">
+              <div class="d-flex align-items-start gap-2">
+                <i class="bi ${icon} fs-5 mt-1"></i>
+                <div class="flex-grow-1">
+                  <div class="d-flex align-items-center justify-content-between">
+                    <span class="fw-semibold small text-light">${n.title}</span>
+                    ${unreadDot}
+                  </div>
+                  <div class="small text-secondary text-wrap" style="font-size: 0.8rem; margin-top:2px;">${n.message}</div>
+                  <div class="text-muted" style="font-size: 0.7rem; margin-top:4px;"><i class="bi bi-clock me-1"></i>${n.created_at}</div>
+                </div>
+              </div>
+            </a>
+          `;
+        });
+        notifList.innerHTML = html;
+      })
+      .catch(function (err) {
+        console.error('Error fetching notifications:', err);
+      });
+  }
+
+  loadNavbarNotifications();
+
+  var markAllReadBtn = document.getElementById('markAllReadBtn');
+  if (markAllReadBtn) {
+    markAllReadBtn.addEventListener('click', function (e) {
+      e.preventDefault();
+      fetch('/ccms/notifications_api.php?action=mark_read', { method: 'POST' })
+        .then(function (res) { return res.json(); })
+        .then(function () {
+          loadNavbarNotifications();
+          showToast('Notifications Updated', 'All notifications marked as read.', 'info');
+        });
+    });
+  }
+
+  // Poll for new notifications every 30s
+  setInterval(loadNavbarNotifications, 30000);
+
+  // -------------------------------------------------------------
+  // 3. PREVENT NEGATIVE NUMBERS (-) IN BUDGET & NUMERIC INPUTS
   // -------------------------------------------------------------
   function setupNegativePrevention() {
-    // Select budget, amount, price, quantity and number inputs
     var selector = 'input[type="number"], input[min], [data-no-negative], input[name*="budget"], input[name*="amount"], input[name*="price"], input[name*="quantity"]';
     
     document.querySelectorAll(selector).forEach(function (input) {
-      // Prevent typing minus (-) or scientific notation 'e'/'E' if min >= 0
       input.addEventListener('keydown', function (e) {
         if (e.key === '-' || e.key === 'e' || e.key === 'E' || e.key === '+') {
-          // Check if negative numbers are disallowed (default for budget/amounts)
           var minVal = input.getAttribute('min');
           if (minVal === null || parseFloat(minVal) >= 0 || input.name.indexOf('budget') !== -1 || input.name.indexOf('amount') !== -1) {
             e.preventDefault();
@@ -43,7 +171,6 @@ document.addEventListener('DOMContentLoaded', function () {
         }
       });
 
-      // Strip minus sign or negative value on input or paste
       input.addEventListener('input', function () {
         var minVal = input.getAttribute('min');
         if (minVal === null || parseFloat(minVal) >= 0 || input.name.indexOf('budget') !== -1 || input.name.indexOf('amount') !== -1) {
@@ -60,7 +187,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
   setupNegativePrevention();
 
-  // Re-run for dynamically added row elements (e.g., PO lines)
   var addRowBtn = document.getElementById('addRow');
   if (addRowBtn) {
     addRowBtn.addEventListener('click', function () {
@@ -69,14 +195,16 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   // -------------------------------------------------------------
-  // 2. LIVE EMAIL, PHONE & NIC VALIDATION HANDLERS
+  // 4. LIVE EMAIL, PHONE & SRI LANKAN NIC VALIDATION HANDLERS
   // -------------------------------------------------------------
   var emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
   var phoneRegex = /^\+?[0-9\s\-\(\)]{9,15}$/;
-  var nicRegex = /^([0-9]{9}[vVxX]|[0-9]{12})$/;
+  var oldNicRegex = /^[0-9]{9}[vVxX]$/;
+  var newNicRegex = /^[0-9]{12}$/;
 
   function setFieldError(field, errorMsg) {
     field.classList.add('is-invalid');
+    field.classList.remove('is-valid');
     var parent = field.parentElement;
     var feedback = parent.querySelector('.invalid-feedback');
     if (!feedback) {
@@ -85,15 +213,35 @@ document.addEventListener('DOMContentLoaded', function () {
       parent.appendChild(feedback);
     }
     feedback.textContent = errorMsg;
+
+    var validFeedback = parent.querySelector('.valid-feedback');
+    if (validFeedback) validFeedback.remove();
+  }
+
+  function setFieldValid(field, successMsg) {
+    field.classList.remove('is-invalid');
+    field.classList.add('is-valid');
+    var parent = field.parentElement;
+    var invalidFeedback = parent.querySelector('.invalid-feedback');
+    if (invalidFeedback) invalidFeedback.remove();
+
+    var feedback = parent.querySelector('.valid-feedback');
+    if (!feedback) {
+      feedback = document.createElement('div');
+      feedback.className = 'valid-feedback text-success small mt-1 font-monospace';
+      parent.appendChild(feedback);
+    }
+    feedback.textContent = successMsg;
   }
 
   function clearFieldError(field) {
     field.classList.remove('is-invalid');
+    field.classList.remove('is-valid');
     var parent = field.parentElement;
     var feedback = parent.querySelector('.invalid-feedback');
-    if (feedback) {
-      feedback.remove();
-    }
+    if (feedback) feedback.remove();
+    var validFeedback = parent.querySelector('.valid-feedback');
+    if (validFeedback) validFeedback.remove();
   }
 
   function validateEmailInput(field) {
@@ -134,7 +282,9 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   function validateNicInput(field) {
-    var val = field.value.trim();
+    var val = field.value.trim().toUpperCase();
+    field.value = val;
+
     if (val === '') {
       if (field.hasAttribute('required')) {
         setFieldError(field, 'NIC number is required.');
@@ -143,11 +293,39 @@ document.addEventListener('DOMContentLoaded', function () {
       clearFieldError(field);
       return true;
     }
-    if (!nicRegex.test(val)) {
-      setFieldError(field, 'Please enter a valid Sri Lankan NIC (9 digits + V/X or 12 digits).');
+
+    var isOld = oldNicRegex.test(val);
+    var isNew = newNicRegex.test(val);
+
+    if (!isOld && !isNew) {
+      setFieldError(field, 'Invalid Sri Lankan NIC. Must be 9 digits followed by V/X (Old) or 12 digits (New). E.g. 951234567V or 199512345678.');
       return false;
     }
-    clearFieldError(field);
+
+    // Parse Sri Lankan NIC Date of Birth & Gender
+    var year = '';
+    var days = 0;
+    if (isOld) {
+      year = '19' + val.substring(0, 2);
+      days = parseInt(val.substring(2, 5), 10);
+    } else {
+      year = val.substring(0, 4);
+      days = parseInt(val.substring(4, 7), 10);
+    }
+
+    var gender = 'Male';
+    if (days > 500) {
+      gender = 'Female';
+      days -= 500;
+    }
+
+    if (days < 1 || days > 366) {
+      setFieldError(field, 'Invalid Sri Lankan NIC: day of year component out of valid range.');
+      return false;
+    }
+
+    var formatName = isOld ? 'Old Format (9 Digits + V/X)' : 'New Format (12 Digits)';
+    setFieldValid(field, `✓ Valid Sri Lankan NIC [${formatName}] - Gender: ${gender}`);
     return true;
   }
 
@@ -164,10 +342,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
   document.querySelectorAll('input[name="nic_number"]').forEach(function (field) {
     field.addEventListener('blur', function () { validateNicInput(field); });
-    field.addEventListener('input', function () {
-      field.value = field.value.toUpperCase();
-      if (field.classList.contains('is-invalid')) validateNicInput(field);
-    });
+    field.addEventListener('input', function () { validateNicInput(field); });
   });
 
   // Validate on form submit

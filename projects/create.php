@@ -45,7 +45,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         $pdo->commit();
         audit($pdo, 'CREATE', 'projects', $project_id);
-        set_flash('success', "Project created. Project ID: #$project_id");
+
+        create_notification(
+            $pdo,
+            'New Project Created',
+            "Project '$name' (Budget: LKR " . number_format($budget, 2) . ") registered successfully.",
+            'success',
+            "/ccms/projects/view.php?id=$project_id"
+        );
+
         redirect('/ccms/projects/list.php');
     }
 }
@@ -140,7 +148,6 @@ require_once __DIR__ . '/../includes/page_start.php';
   </form>
 </div>
 <script>
-// client-side sanity checks in addition to server-side validation
 document.querySelector('form').addEventListener('submit', function(e){
   const start = document.querySelector('[name=start_date]').value;
   const end = document.querySelector('[name=end_date]').value;

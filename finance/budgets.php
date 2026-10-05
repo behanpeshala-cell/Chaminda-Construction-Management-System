@@ -19,7 +19,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $pdo->prepare("INSERT INTO budgets (project_id, allocated_amount) VALUES (?,?)")->execute([$project_id,$amount]);
         }
         audit($pdo,'BUDGET_SET','budgets',$project_id);
-        set_flash('success','Budget saved.');
+
+        $pName = $pdo->query("SELECT project_name FROM projects WHERE project_id = $project_id")->fetchColumn() ?: 'Project';
+        create_notification(
+            $pdo,
+            'Project Budget Set',
+            "Allocated budget for '$pName' set to LKR " . number_format($amount, 2) . ".",
+            'success',
+            '/ccms/finance/budgets.php'
+        );
+
         redirect('/ccms/finance/budgets.php');
     }
 }

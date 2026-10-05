@@ -34,7 +34,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $pdo->prepare("INSERT INTO expenses (project_id, category, amount, description, overrun_justification, recorded_by) VALUES (?,?,?,?,?,?)")
             ->execute([$project_id,$category,$amount,$description,$justification ?: null, current_user_id()]);
         audit($pdo,'CREATE','expenses',(int)$pdo->lastInsertId());
-        set_flash('success','Expense recorded.');
+
+        $pName = $pdo->query("SELECT project_name FROM projects WHERE project_id = $project_id")->fetchColumn() ?: 'Project';
+        create_notification(
+            $pdo,
+            'Expense Recorded',
+            "Expense of LKR " . number_format($amount, 2) . " ($category) recorded for '$pName'.",
+            'success',
+            '/ccms/finance/expenses.php'
+        );
+
         redirect('/ccms/finance/expenses.php');
     }
 }

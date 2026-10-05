@@ -19,7 +19,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // NIC Validation
     if ($nic_number === '') {
         $errors[] = 'NIC number is required.';
-    } elseif (!preg_match('/^([0-9]{9}[vVxX]|[0-9]{12})$/', $nic_number)) {
+    } elseif (!validate_sri_lankan_nic($nic_number)) {
         $errors[] = 'Please enter a valid Sri Lankan NIC (9 digits + V/X or 12 digits).';
     } else {
         $dupNic = $pdo->prepare("SELECT COUNT(*) FROM clients WHERE nic_number=?");
@@ -51,8 +51,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!$errors) {
         $pdo->prepare("INSERT INTO clients (name,nic_number,date_of_birth,gender,email,phone,address) VALUES (?,?,?,?,?,?,?)")
             ->execute([$name,$nic_number,$date_of_birth,$gender,$email,$phone,$address]);
-        audit($pdo,'CREATE','clients',(int)$pdo->lastInsertId());
-        set_flash('success','Client created.');
+        
+        $clientId = (int)$pdo->lastInsertId();
+        audit($pdo,'CREATE','clients',$clientId);
+
+        create_notification(
+            $pdo,
+            'New Client Created',
+            "Client '$name' (NIC: $nic_number) registered successfully.",
+            'success',
+            '/ccms/clients/list.php'
+        );
+
         redirect('/ccms/clients/list.php');
     }
 }

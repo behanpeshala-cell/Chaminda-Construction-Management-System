@@ -33,7 +33,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // NIC Validation
     if ($nic_number === '') {
         $errors[] = 'NIC number is required.';
-    } elseif (!preg_match('/^([0-9]{9}[vVxX]|[0-9]{12})$/', $nic_number)) {
+    } elseif (!validate_sri_lankan_nic($nic_number)) {
         $errors[] = 'Please enter a valid Sri Lankan NIC (9 digits + V/X or 12 digits).';
     } else {
         $dupNic = $pdo->prepare("SELECT COUNT(*) FROM users WHERE nic_number=? AND user_id != ?");
@@ -72,7 +72,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 ->execute([$full_name, $email, $phone, $nic_number, $date_of_birth, $gender, $role, $id]);
         }
         audit($pdo, 'UPDATE', 'users', $id);
-        set_flash('success', 'User updated.');
+
+        create_notification(
+            $pdo,
+            'User Account Updated',
+            "User profile '$full_name' ($user[username]) was updated.",
+            'info',
+            '/ccms/users/list.php'
+        );
+
         redirect('/ccms/users/list.php');
     }
 }
@@ -132,12 +140,11 @@ require_once __DIR__ . '/../includes/page_start.php';
 
     <div class="mb-3">
       <label class="form-label required">Role</label>
-        <select name="role" class="form-select" required>
-          <?php foreach ($roles as $r): ?>
-            <option value="<?php echo $r; ?>" <?php echo (($_POST['role'] ?? $user['role']) === $r) ? 'selected' : ''; ?>><?php echo $r; ?></option>
-          <?php endforeach; ?>
-        </select>
-      </div>
+      <select name="role" class="form-select" required>
+        <?php foreach ($roles as $r): ?>
+          <option value="<?php echo $r; ?>" <?php echo (($_POST['role'] ?? $user['role']) === $r) ? 'selected' : ''; ?>><?php echo $r; ?></option>
+        <?php endforeach; ?>
+      </select>
     </div>
 
     <div class="mb-3">
