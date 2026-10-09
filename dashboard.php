@@ -35,6 +35,27 @@ try {
     $expByCategory = $pdo->query("SELECT category, SUM(amount) total FROM expenses GROUP BY category")->fetchAll();
 } catch (Exception $e) { $expByCategory = []; }
 
+// 3. Budget vs Actual Spent per Project
+try {
+    $budgetVsExpense = $pdo->query("SELECT p.project_name, 
+                                           COALESCE(b.allocated_amount, 0) AS budget, 
+                                           COALESCE(SUM(e.amount), 0) AS spent 
+                                    FROM projects p 
+                                    LEFT JOIN budgets b ON b.project_id = p.project_id 
+                                    LEFT JOIN expenses e ON e.project_id = p.project_id 
+                                    GROUP BY p.project_id, p.project_name, b.allocated_amount 
+                                    ORDER BY p.created_at DESC LIMIT 6")->fetchAll();
+} catch (Exception $e) { $budgetVsExpense = []; }
+
+// 4. Monthly Expense Trend
+try {
+    $monthlyExpenses = $pdo->query("SELECT DATE_FORMAT(created_at, '%b %Y') AS m_label, 
+                                           SUM(amount) AS m_total 
+                                    FROM expenses 
+                                    GROUP BY YEAR(created_at), MONTH(created_at), m_label 
+                                    ORDER BY MIN(created_at) ASC LIMIT 6")->fetchAll();
+} catch (Exception $e) { $monthlyExpenses = []; }
+
 try {
     $myProjects = [];
     if ($role === 'Client') {
@@ -160,19 +181,57 @@ require_once __DIR__ . '/includes/page_start.php';
   </div>
 </div>
 
-<!-- Charts & Summary Cards -->
-<div class="row g-3">
+<!-- Interactive Charts Grid (2x2 Matrix) -->
+<div class="row g-3 mb-4">
+  <!-- Chart 1: Project Status Breakdown -->
   <div class="col-md-6">
-    <div class="card p-3 h-100">
-      <h6 class="fw-bold text-emerald mb-3"><i class="bi bi-pie-chart-fill me-2"></i>Projects Overview</h6>
-      <canvas id="projStatusChart" height="180"></canvas>
+    <div class="card p-3 h-100 shadow-sm border-secondary border-opacity-25">
+      <div class="d-flex align-items-center justify-content-between mb-3">
+        <h6 class="fw-bold text-emerald mb-0"><i class="bi bi-pie-chart-fill me-2"></i>Projects Status Distribution</h6>
+        <span class="badge bg-dark text-secondary border border-secondary" style="font-size:0.7rem">Live Realtime</span>
+      </div>
+      <div style="position: relative; height: 220px;">
+        <canvas id="projStatusChart"></canvas>
+      </div>
     </div>
   </div>
 
+  <!-- Chart 2: Budget vs Actual Spent per Project -->
   <div class="col-md-6">
-    <div class="card p-3 h-100">
-      <h6 class="fw-bold text-cyan mb-3"><i class="bi bi-bar-chart-fill me-2"></i>Expenses Breakdown (LKR)</h6>
-      <canvas id="expCategoryChart" height="180"></canvas>
+    <div class="card p-3 h-100 shadow-sm border-secondary border-opacity-25">
+      <div class="d-flex align-items-center justify-content-between mb-3">
+        <h6 class="fw-bold text-warning mb-0"><i class="bi bi-bar-chart-steps me-2"></i>Allocated Budget vs Actual Spent (LKR)</h6>
+        <span class="badge bg-dark text-secondary border border-secondary" style="font-size:0.7rem">Project Comparison</span>
+      </div>
+      <div style="position: relative; height: 220px;">
+        <canvas id="budgetVsExpenseChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Chart 3: Expenses Breakdown by Category -->
+  <div class="col-md-6">
+    <div class="card p-3 h-100 shadow-sm border-secondary border-opacity-25">
+      <div class="d-flex align-items-center justify-content-between mb-3">
+        <h6 class="fw-bold text-cyan mb-0"><i class="bi bi-diagram-3-fill me-2"></i>Expenses Breakdown by Category</h6>
+        <span class="badge bg-dark text-secondary border border-secondary" style="font-size:0.7rem">Cost Categories</span>
+      </div>
+      <div style="position: relative; height: 220px;">
+        <canvas id="expCategoryChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Chart 4: Monthly Expenditure Trend -->
+  <div class="col-md-6">
+    <div class="card p-3 h-100 shadow-sm border-secondary border-opacity-25">
+      <div class="d-flex align-items-center justify-content-between mb-3">
+        <h6 class="fw-bold text-info mb-0"><i class="bi bi-graph-up-arrow me-2"></i>Monthly Expenditure Trend</h6>
+        <span class="badge bg-dark text-secondary border border-secondary" style="font-size:0.7rem">Financial Flow</span>
+      </div>
+      <div style="position: relative; height: 220px;">
+        <canvas id="monthlyExpenseChart"></canvas>
+      </div>
     </div>
   </div>
 </div>
@@ -212,34 +271,163 @@ require_once __DIR__ . '/includes/page_start.php';
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 <script>
-if (typeof Chart !== 'undefined') {
-  Chart.defaults.color = '#cbd5e1';
-  Chart.defaults.borderColor = 'rgba(51, 65, 85, 0.4)';
-}
-new Chart(document.getElementById('projStatusChart'), {
-  type: 'doughnut',
-  data: {
-    labels: <?php echo json_encode(array_column($projByStatus,'status')); ?>,
-    datasets: [{ data: <?php echo json_encode(array_column($projByStatus,'c')); ?>,
-      backgroundColor: ['#10b981','#06b6d4','#f59e0b','#3b82f6','#f43f5e'] }]
-  },
-  options: { plugins: { legend: { position: 'bottom', labels: { color: '#cbd5e1' } } } }
-});
-
-new Chart(document.getElementById('expCategoryChart'), {
-  type: 'bar',
-  data: {
-    labels: <?php echo json_encode(array_column($expByCategory,'category')); ?>,
-    datasets: [{ label: 'LKR', data: <?php echo json_encode(array_column($expByCategory,'total')); ?>,
-      backgroundColor: '#10b981' }]
-  },
-  options: {
-    plugins: { legend: { display: false } },
-    scales: {
-      x: { ticks: { color: '#cbd5e1' }, grid: { color: 'rgba(51, 65, 85, 0.4)' } },
-      y: { ticks: { color: '#cbd5e1' }, grid: { color: 'rgba(51, 65, 85, 0.4)' } }
-    }
+document.addEventListener("DOMContentLoaded", function () {
+  if (typeof Chart !== 'undefined') {
+    Chart.defaults.color = '#94a3b8';
+    Chart.defaults.borderColor = 'rgba(51, 65, 85, 0.4)';
+    Chart.defaults.font.family = "'Inter', sans-serif";
   }
+
+  // 1. Projects Status Doughnut Chart
+  new Chart(document.getElementById('projStatusChart'), {
+    type: 'doughnut',
+    data: {
+      labels: <?php echo json_encode(array_column($projByStatus, 'status')); ?>,
+      datasets: [{
+        data: <?php echo json_encode(array_column($projByStatus, 'c')); ?>,
+        backgroundColor: ['#10b981', '#38bdf8', '#f59e0b', '#6366f1', '#ef4444'],
+        borderWidth: 2,
+        borderColor: '#0f172a'
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'right', labels: { color: '#cbd5e1', font: { size: 11 } } }
+      }
+    }
+  });
+
+  // 2. Budget vs Actual Spent Grouped Bar Chart
+  new Chart(document.getElementById('budgetVsExpenseChart'), {
+    type: 'bar',
+    data: {
+      labels: <?php echo json_encode(array_column($budgetVsExpense, 'project_name')); ?>,
+      datasets: [
+        {
+          label: 'Allocated Budget',
+          data: <?php echo json_encode(array_column($budgetVsExpense, 'budget')); ?>,
+          backgroundColor: 'rgba(16, 185, 129, 0.75)',
+          borderColor: '#10b981',
+          borderWidth: 1,
+          borderRadius: 4
+        },
+        {
+          label: 'Actual Spent',
+          data: <?php echo json_encode(array_column($budgetVsExpense, 'spent')); ?>,
+          backgroundColor: 'rgba(245, 158, 11, 0.85)',
+          borderColor: '#f59e0b',
+          borderWidth: 1,
+          borderRadius: 4
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'top', labels: { color: '#cbd5e1', font: { size: 11 } } },
+        tooltip: {
+          callbacks: {
+            label: function(context) {
+              return context.dataset.label + ': LKR ' + Number(context.raw).toLocaleString();
+            }
+          }
+        }
+      },
+      scales: {
+        x: { ticks: { color: '#94a3b8', font: { size: 10 } }, grid: { display: false } },
+        y: { 
+          ticks: { 
+            color: '#94a3b8',
+            callback: function(val) { return 'LKR ' + (val >= 1000000 ? (val/1000000).toFixed(1) + 'M' : val.toLocaleString()); }
+          },
+          grid: { color: 'rgba(51, 65, 85, 0.4)' } 
+        }
+      }
+    }
+  });
+
+  // 3. Expenses Category Bar Chart
+  new Chart(document.getElementById('expCategoryChart'), {
+    type: 'bar',
+    data: {
+      labels: <?php echo json_encode(array_column($expByCategory, 'category')); ?>,
+      datasets: [{
+        label: 'Spent (LKR)',
+        data: <?php echo json_encode(array_column($expByCategory, 'total')); ?>,
+        backgroundColor: ['#38bdf8', '#10b981', '#f59e0b', '#a855f7', '#ec4899', '#6366f1'],
+        borderRadius: 4
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: function(context) {
+              return 'Spent: LKR ' + Number(context.raw).toLocaleString();
+            }
+          }
+        }
+      },
+      scales: {
+        x: { ticks: { color: '#94a3b8', font: { size: 10 } }, grid: { display: false } },
+        y: { 
+          ticks: { 
+            color: '#94a3b8',
+            callback: function(val) { return 'LKR ' + (val >= 1000000 ? (val/1000000).toFixed(1) + 'M' : val.toLocaleString()); }
+          },
+          grid: { color: 'rgba(51, 65, 85, 0.4)' } 
+        }
+      }
+    }
+  });
+
+  // 4. Monthly Expense Line Chart
+  new Chart(document.getElementById('monthlyExpenseChart'), {
+    type: 'line',
+    data: {
+      labels: <?php echo json_encode(array_column($monthlyExpenses, 'm_label')); ?>,
+      datasets: [{
+        label: 'Monthly Expenditure',
+        data: <?php echo json_encode(array_column($monthlyExpenses, 'm_total')); ?>,
+        borderColor: '#06b6d4',
+        backgroundColor: 'rgba(6, 182, 212, 0.15)',
+        fill: true,
+        tension: 0.35,
+        pointBackgroundColor: '#38bdf8',
+        pointRadius: 4
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: function(context) {
+              return 'Monthly Spent: LKR ' + Number(context.raw).toLocaleString();
+            }
+          }
+        }
+      },
+      scales: {
+        x: { ticks: { color: '#94a3b8', font: { size: 10 } }, grid: { display: false } },
+        y: { 
+          ticks: { 
+            color: '#94a3b8',
+            callback: function(val) { return 'LKR ' + (val >= 1000000 ? (val/1000000).toFixed(1) + 'M' : val.toLocaleString()); }
+          },
+          grid: { color: 'rgba(51, 65, 85, 0.4)' } 
+        }
+      }
+    }
+  });
 });
 </script>
 

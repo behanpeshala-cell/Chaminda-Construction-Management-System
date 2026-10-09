@@ -6,15 +6,36 @@ $page_title = 'Inventory / Stock Movements';
 $page_actions = in_array($role, ['Administrator','Site Staff','Project Manager'])
   ? '<a href="/ccms/inventory/move.php" class="btn btn-success"><i class="bi bi-arrow-left-right"></i> Record Stock Movement</a>' : '';
 
-$txns = $pdo->query("SELECT t.*, m.name AS material_name, m.unit, u.full_name AS by_user, p.project_name
-                      FROM stock_transactions t
-                      JOIN materials m ON m.material_id=t.material_id
-                      JOIN users u ON u.user_id=t.created_by
-                      LEFT JOIN projects p ON p.project_id=t.project_id
-                      ORDER BY t.created_at DESC LIMIT 100")->fetchAll();
+$search = trim($_GET['q'] ?? '');
+if ($search !== '') {
+    $stmt = $pdo->prepare("SELECT t.*, m.name AS material_name, m.unit, u.full_name AS by_user, p.project_name
+                          FROM stock_transactions t
+                          JOIN materials m ON m.material_id=t.material_id
+                          JOIN users u ON u.user_id=t.created_by
+                          LEFT JOIN projects p ON p.project_id=t.project_id
+                          WHERE m.name LIKE ? OR p.project_name LIKE ? OR u.full_name LIKE ? OR t.reference LIKE ? OR t.type LIKE ?
+                          ORDER BY t.created_at DESC LIMIT 100");
+    $term = "%$search%";
+    $stmt->execute([$term, $term, $term, $term, $term]);
+    $txns = $stmt->fetchAll();
+} else {
+    $txns = $pdo->query("SELECT t.*, m.name AS material_name, m.unit, u.full_name AS by_user, p.project_name
+                          FROM stock_transactions t
+                          JOIN materials m ON m.material_id=t.material_id
+                          JOIN users u ON u.user_id=t.created_by
+                          LEFT JOIN projects p ON p.project_id=t.project_id
+                          ORDER BY t.created_at DESC LIMIT 100")->fetchAll();
+}
+
 require_once __DIR__ . '/../includes/page_start.php';
 ?>
 <div class="card p-3">
+  <form class="row g-2 mb-3" method="get">
+    <div class="col-md-4">
+      <input type="text" name="q" class="form-control" placeholder="Search stock by material, project or user" value="<?php echo htmlspecialchars($search); ?>" oninput="filterTable(this.value)">
+    </div>
+    <div class="col-auto"><button class="btn btn-outline-secondary"><i class="bi bi-search"></i> Search</button></div>
+  </form>
   <div class="table-responsive">
   <table class="table table-hover align-middle">
     <thead><tr><th>Date</th><th>Material</th><th>Type</th><th>Qty</th><th>Reference / Project</th><th>Recorded By</th></tr></thead>

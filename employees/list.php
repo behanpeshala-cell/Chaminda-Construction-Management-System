@@ -3,10 +3,26 @@ require_once __DIR__ . '/../includes/auth.php';
 require_role(['Administrator','Project Manager']);
 $page_title = 'Employees';
 $page_actions = '<a href="/ccms/employees/create.php" class="btn btn-success"><i class="bi bi-plus-lg"></i> New Employee</a>';
-$employees = $pdo->query("SELECT * FROM employees ORDER BY created_at DESC")->fetchAll();
+
+$search = trim($_GET['q'] ?? '');
+if ($search !== '') {
+    $stmt = $pdo->prepare("SELECT * FROM employees WHERE full_name LIKE ? OR nic_number LIKE ? OR role_title LIKE ? OR phone LIKE ? OR email LIKE ? ORDER BY created_at DESC");
+    $term = "%$search%";
+    $stmt->execute([$term, $term, $term, $term, $term]);
+    $employees = $stmt->fetchAll();
+} else {
+    $employees = $pdo->query("SELECT * FROM employees ORDER BY created_at DESC")->fetchAll();
+}
+
 require_once __DIR__ . '/../includes/page_start.php';
 ?>
 <div class="card p-3">
+  <form class="row g-2 mb-3" method="get">
+    <div class="col-md-4">
+      <input type="text" name="q" class="form-control" placeholder="Search by name, NIC, role, email or phone" value="<?php echo htmlspecialchars($search); ?>" oninput="filterTable(this.value)">
+    </div>
+    <div class="col-auto"><button class="btn btn-outline-secondary"><i class="bi bi-search"></i> Search</button></div>
+  </form>
   <div class="table-responsive">
   <table class="table table-hover align-middle">
     <thead><tr><th>Name</th><th>NIC</th><th>Role</th><th>Phone</th><th>Email</th><th>Status</th><th>Actions</th></tr></thead>

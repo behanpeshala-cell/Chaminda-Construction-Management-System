@@ -6,10 +6,25 @@ $page_title = 'Materials Catalogue';
 $page_actions = in_array($role, ['Administrator','Site Staff','Project Manager','Procurement Staff'])
   ? '<a href="/ccms/materials/create.php" class="btn btn-success"><i class="bi bi-plus-lg"></i> New Material</a>' : '';
 
-$materials = $pdo->query("SELECT m.*, COALESCE(i.quantity_on_hand,0) qty FROM materials m LEFT JOIN inventory i ON i.material_id=m.material_id ORDER BY m.created_at DESC")->fetchAll();
+$search = trim($_GET['q'] ?? '');
+if ($search !== '') {
+    $stmt = $pdo->prepare("SELECT m.*, COALESCE(i.quantity_on_hand,0) qty FROM materials m LEFT JOIN inventory i ON i.material_id=m.material_id WHERE m.name LIKE ? OR m.unit LIKE ? ORDER BY m.created_at DESC");
+    $term = "%$search%";
+    $stmt->execute([$term, $term]);
+    $materials = $stmt->fetchAll();
+} else {
+    $materials = $pdo->query("SELECT m.*, COALESCE(i.quantity_on_hand,0) qty FROM materials m LEFT JOIN inventory i ON i.material_id=m.material_id ORDER BY m.created_at DESC")->fetchAll();
+}
+
 require_once __DIR__ . '/../includes/page_start.php';
 ?>
 <div class="card p-3">
+  <form class="row g-2 mb-3" method="get">
+    <div class="col-md-4">
+      <input type="text" name="q" class="form-control" placeholder="Search materials by name or unit" value="<?php echo htmlspecialchars($search); ?>" oninput="filterTable(this.value)">
+    </div>
+    <div class="col-auto"><button class="btn btn-outline-secondary"><i class="bi bi-search"></i> Search</button></div>
+  </form>
   <div class="table-responsive">
   <table class="table table-hover align-middle">
     <thead><tr><th>Material</th><th>Unit</th><th>Unit Price (LKR)</th><th>Reorder Level</th><th>Status</th><th>Actions</th></tr></thead>

@@ -33,15 +33,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-$rows = $pdo->query("SELECT p.project_id, p.project_name, p.estimated_budget, b.allocated_amount,
-                             COALESCE((SELECT SUM(amount) FROM expenses e WHERE e.project_id=p.project_id),0) AS spent
-                      FROM projects p LEFT JOIN budgets b ON b.project_id=p.project_id
-                      ORDER BY p.created_at DESC")->fetchAll();
+$search = trim($_GET['q'] ?? '');
+if ($search !== '') {
+    $stmt = $pdo->prepare("SELECT p.project_id, p.project_name, p.estimated_budget, b.allocated_amount,
+                                 COALESCE((SELECT SUM(amount) FROM expenses e WHERE e.project_id=p.project_id),0) AS spent
+                          FROM projects p LEFT JOIN budgets b ON b.project_id=p.project_id
+                          WHERE p.project_name LIKE ?
+                          ORDER BY p.created_at DESC");
+    $term = "%$search%";
+    $stmt->execute([$term]);
+    $rows = $stmt->fetchAll();
+} else {
+    $rows = $pdo->query("SELECT p.project_id, p.project_name, p.estimated_budget, b.allocated_amount,
+                                 COALESCE((SELECT SUM(amount) FROM expenses e WHERE e.project_id=p.project_id),0) AS spent
+                          FROM projects p LEFT JOIN budgets b ON b.project_id=p.project_id
+                          ORDER BY p.created_at DESC")->fetchAll();
+}
 
 require_once __DIR__ . '/../includes/page_start.php';
 ?>
 <?php foreach ($errors as $e): ?><div class="alert alert-danger py-2"><?php echo htmlspecialchars($e); ?></div><?php endforeach; ?>
 <div class="card p-3">
+  <form class="row g-2 mb-3" method="get">
+    <div class="col-md-4">
+      <input type="text" name="q" class="form-control" placeholder="Search project budgets by name" value="<?php echo htmlspecialchars($search); ?>" oninput="filterTable(this.value)">
+    </div>
+    <div class="col-auto"><button class="btn btn-outline-secondary"><i class="bi bi-search"></i> Search</button></div>
+  </form>
   <div class="table-responsive">
   <table class="table table-hover align-middle">
     <thead><tr><th>Project</th><th>Estimated Budget</th><th>Allocated Budget</th><th>Spent</th><th>Remaining</th><th>Set / Update</th></tr></thead>

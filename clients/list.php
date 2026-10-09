@@ -27,7 +27,7 @@ require_once __DIR__ . '/../includes/page_start.php';
 ?>
 <div class="card p-3">
   <form class="row g-2 mb-3" method="get">
-    <div class="col-md-4"><input type="text" name="q" class="form-control" placeholder="Search by name, email or NIC" value="<?php echo htmlspecialchars($search); ?>"></div>
+    <div class="col-md-4"><input type="text" name="q" class="form-control" placeholder="Search by name, email or NIC" value="<?php echo htmlspecialchars($search); ?>" oninput="filterTable(this.value)"></div>
     <div class="col-auto"><button class="btn btn-outline-secondary"><i class="bi bi-search"></i> Search</button></div>
   </form>
   <div class="table-responsive">

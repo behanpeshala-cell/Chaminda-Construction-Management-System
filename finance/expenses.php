@@ -48,10 +48,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-$expenses = $pdo->query("SELECT e.*, p.project_name, u.full_name FROM expenses e
+$search = trim($_GET['q'] ?? '');
+if ($search !== '') {
+    $stmt = $pdo->prepare("SELECT e.*, p.project_name, u.full_name FROM expenses e
                           JOIN projects p ON p.project_id=e.project_id
                           JOIN users u ON u.user_id=e.recorded_by
-                          ORDER BY e.created_at DESC LIMIT 100")->fetchAll();
+                          WHERE p.project_name LIKE ? OR e.category LIKE ? OR e.description LIKE ? OR u.full_name LIKE ?
+                          ORDER BY e.created_at DESC LIMIT 100");
+    $term = "%$search%";
+    $stmt->execute([$term, $term, $term, $term]);
+    $expenses = $stmt->fetchAll();
+} else {
+    $expenses = $pdo->query("SELECT e.*, p.project_name, u.full_name FROM expenses e
+                              JOIN projects p ON p.project_id=e.project_id
+                              JOIN users u ON u.user_id=e.recorded_by
+                              ORDER BY e.created_at DESC LIMIT 100")->fetchAll();
+}
 
 require_once __DIR__ . '/../includes/page_start.php';
 ?>
@@ -93,7 +105,15 @@ require_once __DIR__ . '/../includes/page_start.php';
   </div>
   <div class="col-lg-8">
     <div class="card p-3">
-      <h6>Recent Expenses</h6>
+      <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
+        <h6 class="mb-0">Recent Expenses</h6>
+        <form class="row g-2 mb-0" method="get">
+          <div class="col-auto">
+            <input type="text" name="q" class="form-control form-control-sm" placeholder="Search by project, category..." value="<?php echo htmlspecialchars($search); ?>" oninput="filterTable(this.value, '.col-lg-8 table')">
+          </div>
+          <div class="col-auto"><button class="btn btn-sm btn-outline-secondary"><i class="bi bi-search"></i> Search</button></div>
+        </form>
+      </div>
       <div class="table-responsive">
       <table class="table table-sm table-hover align-middle">
         <thead><tr><th>Date</th><th>Project</th><th>Category</th><th>Amount</th><th>By</th></tr></thead>

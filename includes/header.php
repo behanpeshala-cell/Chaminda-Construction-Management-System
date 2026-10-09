@@ -21,7 +21,7 @@
         <i class="bi bi-list fs-5"></i>
       </button>
       <a class="navbar-brand fw-bold d-flex align-items-center gap-2" href="/ccms/dashboard.php">
-        <i class="bi bi-buildings-fill text-warning"></i>
+        <img src="/ccms/assets/images/logo.png" alt="CCMS Logo" style="height: 32px; width: 32px; object-fit: contain; background: #ffffff; padding: 2px; border-radius: 6px; border: 1px solid #10B981;">
         <span>CCMS <span class="badge bg-warning text-dark fs-6 font-monospace ms-1" style="font-size:0.65rem !important">PRO</span></span>
       </a>
     </div>

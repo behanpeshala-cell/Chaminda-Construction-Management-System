@@ -118,8 +118,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   <div class="card ccms-auth-card my-auto" style="max-width: 600px;">
     <div class="card-body p-4 p-md-5">
       <div class="text-center mb-4">
-        <i class="bi bi-buildings" style="font-size:2.5rem;color:var(--ccms-primary)"></i>
-        <h4 class="mt-2 mb-0">Create Account</h4>
+        <img src="/ccms/assets/images/logo.png" alt="CCMS Logo" style="height: 70px; width: auto; object-fit: contain; background: #ffffff; padding: 6px; border-radius: 12px; border: 1.5px solid #10B981; margin-bottom: 8px; box-shadow: 0 4px 15px rgba(16,185,129,0.2);">
+        <h4 class="mt-1 mb-0">Create Account</h4>
         <small class="text-muted">Chaminda Construction Management System</small>
       </div>
 

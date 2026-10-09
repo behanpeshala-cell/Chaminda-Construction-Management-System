@@ -6,31 +6,55 @@ $page_title = 'Material Requests';
 $page_actions = in_array($role, ['Administrator','Site Staff','Project Manager','Client'])
   ? '<a href="/ccms/material_requests/create.php" class="btn btn-success"><i class="bi bi-plus-lg"></i> New Request</a>' : '';
 
+$search = trim($_GET['q'] ?? '');
+
 if ($role === 'Client') {
-    $stmt = $pdo->prepare("SELECT r.*, p.project_name, m.name AS material_name, m.unit, u1.full_name AS requested_by_name, u2.full_name AS approved_by_name
-                          FROM material_requests r
-                          JOIN projects p ON p.project_id=r.project_id
-                          JOIN clients c ON c.client_id=p.client_id
-                          JOIN materials m ON m.material_id=r.material_id
-                          JOIN users u1 ON u1.user_id=r.requested_by
-                          LEFT JOIN users u2 ON u2.user_id=r.approved_by
-                          WHERE c.email = (SELECT email FROM users WHERE user_id=?) OR c.nic_number = (SELECT nic_number FROM users WHERE user_id=?)
-                          ORDER BY r.created_at DESC");
-    $stmt->execute([current_user_id(), current_user_id()]);
+    $sql = "SELECT r.*, p.project_name, m.name AS material_name, m.unit, u1.full_name AS requested_by_name, u2.full_name AS approved_by_name
+            FROM material_requests r
+            JOIN projects p ON p.project_id=r.project_id
+            JOIN clients c ON c.client_id=p.client_id
+            JOIN materials m ON m.material_id=r.material_id
+            JOIN users u1 ON u1.user_id=r.requested_by
+            LEFT JOIN users u2 ON u2.user_id=r.approved_by
+            WHERE (c.email = (SELECT email FROM users WHERE user_id=?) OR c.nic_number = (SELECT nic_number FROM users WHERE user_id=?))";
+    $params = [current_user_id(), current_user_id()];
+    if ($search !== '') {
+        $sql .= " AND (p.project_name LIKE ? OR m.name LIKE ? OR r.status LIKE ? OR u1.full_name LIKE ?)";
+        $term = "%$search%";
+        $params[] = $term; $params[] = $term; $params[] = $term; $params[] = $term;
+    }
+    $sql .= " ORDER BY r.created_at DESC";
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute($params);
     $requests = $stmt->fetchAll();
 } else {
-    $requests = $pdo->query("SELECT r.*, p.project_name, m.name AS material_name, m.unit, u1.full_name AS requested_by_name, u2.full_name AS approved_by_name
-                              FROM material_requests r
-                              JOIN projects p ON p.project_id=r.project_id
-                              JOIN materials m ON m.material_id=r.material_id
-                              JOIN users u1 ON u1.user_id=r.requested_by
-                              LEFT JOIN users u2 ON u2.user_id=r.approved_by
-                              ORDER BY r.created_at DESC")->fetchAll();
+    $sql = "SELECT r.*, p.project_name, m.name AS material_name, m.unit, u1.full_name AS requested_by_name, u2.full_name AS approved_by_name
+            FROM material_requests r
+            JOIN projects p ON p.project_id=r.project_id
+            JOIN materials m ON m.material_id=r.material_id
+            JOIN users u1 ON u1.user_id=r.requested_by
+            LEFT JOIN users u2 ON u2.user_id=r.approved_by";
+    $params = [];
+    if ($search !== '') {
+        $sql .= " WHERE (p.project_name LIKE ? OR m.name LIKE ? OR r.status LIKE ? OR u1.full_name LIKE ?)";
+        $term = "%$search%";
+        $params = [$term, $term, $term, $term];
+    }
+    $sql .= " ORDER BY r.created_at DESC";
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute($params);
+    $requests = $stmt->fetchAll();
 }
 
 require_once __DIR__ . '/../includes/page_start.php';
 ?>
 <div class="card p-3">
+  <form class="row g-2 mb-3" method="get">
+    <div class="col-md-4">
+      <input type="text" name="q" class="form-control" placeholder="Search by project, material, status or requester" value="<?php echo htmlspecialchars($search); ?>" oninput="filterTable(this.value)">
+    </div>
+    <div class="col-auto"><button class="btn btn-outline-secondary"><i class="bi bi-search"></i> Search</button></div>
+  </form>
   <div class="table-responsive">
   <table class="table table-hover align-middle">
     <thead><tr><th>Date</th><th>Project</th><th>Material</th><th>Qty</th><th>Status</th><th>Requested By</th><th>Decision</th><?php if (in_array($role,['Administrator','Project Manager'])): ?><th>Actions</th><?php endif; ?></tr></thead>

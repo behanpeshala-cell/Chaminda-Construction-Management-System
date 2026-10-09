@@ -172,13 +172,20 @@
     gap: 14px;
   }
   .logo-icon {
-    width: 44px; height: 44px;
-    background: linear-gradient(135deg, var(--bg-surface), var(--bg-card));
+    width: 46px; height: 46px;
+    background: #FFFFFF;
     border: 1.5px solid var(--amber);
     border-radius: var(--radius-md);
     display: flex; align-items: center; justify-content: center;
     box-shadow: 0 0 15px var(--amber-glow);
-    color: var(--amber);
+    padding: 3px;
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+  .logo-icon img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
   }
   .brand-text h2 {
     font-size: 1.25rem;
@@ -1070,6 +1077,54 @@
     .mock-sidebar { display: none; }
     .calc-box { padding: 24px; }
   }
+
+  /* ---------- FLOATING WHATSAPP BUTTON ---------- */
+  .whatsapp-float {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: linear-gradient(135deg, #25D366 0%, #128C7E 100%);
+    color: #FFFFFF !important;
+    padding: 14px 22px;
+    border-radius: 50px;
+    box-shadow: 0 10px 25px rgba(37, 211, 102, 0.4), 0 0 15px rgba(37, 211, 102, 0.3);
+    font-family: 'Outfit', sans-serif;
+    font-weight: 700;
+    font-size: 0.95rem;
+    text-decoration: none;
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    animation: whatsappPulse 2.5s infinite;
+  }
+  .whatsapp-float:hover {
+    transform: translateY(-4px) scale(1.05);
+    box-shadow: 0 15px 35px rgba(37, 211, 102, 0.6), 0 0 25px rgba(37, 211, 102, 0.5);
+    color: #FFFFFF !important;
+  }
+  .whatsapp-icon-wrap {
+    width: 26px;
+    height: 26px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  @keyframes whatsappPulse {
+    0%, 100% { box-shadow: 0 10px 25px rgba(37, 211, 102, 0.4), 0 0 0 0 rgba(37, 211, 102, 0.5); }
+    50% { box-shadow: 0 15px 35px rgba(37, 211, 102, 0.6), 0 0 0 14px rgba(37, 211, 102, 0); }
+  }
+
+  @media (max-width: 576px) {
+    .whatsapp-float span { display: none; }
+    .whatsapp-float {
+      padding: 14px;
+      border-radius: 50%;
+      bottom: 20px;
+      right: 20px;
+    }
+  }
 </style>
 </head>
 <body>
@@ -1079,12 +1134,7 @@
   <div class="container nav-wrapper">
     <a href="#top" class="brand-logo">
       <div class="logo-icon">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M3 21h18"/>
-          <path d="M5 21V7l7-4 7 4v14"/>
-          <path d="M9 21v-6h6v6"/>
-          <circle cx="12" cy="10" r="1"/>
-        </svg>
+        <img src="assets/images/logo.png" alt="Chaminda Construction Logo">
       </div>
       <div class="brand-text">
         <h2>CHAMINDA</h2>
@@ -1116,8 +1166,7 @@
   <div class="container hero-grid">
     <div class="hero-content">
       <div class="badge">
-        <span class="badge-dot"></span>
-        Chaminda Construction Co. · Est. Sri Lanka
+        Chaminda Construction Co. Sri Lanka
       </div>
       <h1>
         We Build Iconic <br>
@@ -1649,25 +1698,113 @@
   </div>
 </section>
 
-<!-- ============ CTA BANNER ============ -->
-<div class="container">
-  <section class="cta-section" id="contact">
-    <div class="container cta-flex">
-      <div class="cta-text">
-        <h2>Ready to start your next construction project?</h2>
-        <p>Put your project on our schedule with complete digital transparency.</p>
+<!-- ============ CONTACT & EMAIL SECTION ============ -->
+<section class="contact-section" id="contact" style="padding: 100px 0; background: var(--bg-dark);">
+  <div class="container">
+    <div class="section-head">
+      <div class="badge">
+        Get In Touch
       </div>
-      <div style="display:flex; gap:16px;">
-        <a href="mailto:info@chamindaconstruction.lk" class="btn" style="background:#050E17; color:#FFF;">
-          Contact Site Office
-        </a>
-        <a href="tel:+94112000000" class="btn" style="background:rgba(5,14,23,0.15); color:#050E17; border:1px solid rgba(5,14,23,0.3);">
-          +94 11 200 0000
-        </a>
-      </div>
+      <h2>Contact Us &amp; Send An Email</h2>
+      <p>Have a project inquiry or request? Fill out the form below or email us directly at <strong>chamindaconstruction@gmail.com</strong>.</p>
     </div>
-  </section>
-</div>
+
+    <div style="display: grid; grid-template-columns: 1fr 1.3fr; gap: 40px; align-items: start;">
+      
+      <!-- Contact Info Card -->
+      <div style="background: var(--bg-card); border: 1px solid var(--border-glow); border-radius: var(--radius-lg); padding: 40px; box-shadow: 0 20px 40px rgba(0,0,0,0.5);">
+        <h3 style="font-size: 1.6rem; color: #FFF; margin-bottom: 20px; font-weight: 800;">Direct Contact Info</h3>
+        <p style="color: var(--text-secondary); margin-bottom: 30px; line-height: 1.7;">
+          Reach out directly to our engineering team or send your project specifications.
+        </p>
+
+        <div style="display: flex; flex-direction: column; gap: 24px;">
+          <div style="display: flex; align-items: center; gap: 16px;">
+            <div style="width: 48px; height: 48px; border-radius: var(--radius-md); background: var(--amber-glow); border: 1px solid var(--border-glow); color: var(--amber); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+            </div>
+            <div>
+              <div style="font-size: 0.78rem; text-transform: uppercase; color: var(--text-muted); font-family: 'Outfit';">Primary Email</div>
+              <a href="mailto:behanpeshala@gmail.com" style="font-size: 1.05rem; font-weight: 700; color: var(--amber); font-family: 'Outfit';">chamindaconstruction@gmail.com</a>
+            </div>
+          </div>
+
+          <div style="display: flex; align-items: center; gap: 16px;">
+            <div style="width: 48px; height: 48px; border-radius: var(--radius-md); background: var(--amber-glow); border: 1px solid var(--border-glow); color: var(--amber); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+            </div>
+            <div>
+              <div style="font-size: 0.78rem; text-transform: uppercase; color: var(--text-muted); font-family: 'Outfit';">Phone / WhatsApp</div>
+              <div style="font-size: 1.05rem; font-weight: 700; color: #FFF; font-family: 'Outfit';">+94 11 200 0000 / +94 77 123 4567</div>
+            </div>
+          </div>
+
+          <div style="display: flex; align-items: center; gap: 16px;">
+            <div style="width: 48px; height: 48px; border-radius: var(--radius-md); background: var(--amber-glow); border: 1px solid var(--border-glow); color: var(--amber); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+            </div>
+            <div>
+              <div style="font-size: 0.78rem; text-transform: uppercase; color: var(--text-muted); font-family: 'Outfit';">Office Address</div>
+              <div style="font-size: 0.95rem; color: var(--text-secondary);">No. 145, Galle Road, Colombo 03, Sri Lanka</div>
+            </div>
+          </div>
+        </div>
+
+        <div style="margin-top: 36px; padding-top: 24px; border-top: 1px solid var(--border-light);">
+          <a href="mailto:behanpeshala@gmail.com" class="btn btn-amber" style="width: 100%;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+            Open Mail App
+          </a>
+        </div>
+      </div>
+
+      <!-- Contact Email Form -->
+      <div style="background: var(--bg-card); border: 1px solid var(--border-light); border-radius: var(--radius-lg); padding: 40px; box-shadow: 0 20px 40px rgba(0,0,0,0.4);">
+        <h3 style="font-size: 1.6rem; color: #FFF; margin-bottom: 8px; font-weight: 800;">Send Us A Direct Email</h3>
+        <p style="color: var(--text-secondary); margin-bottom: 24px; font-size: 0.95rem;">
+          Your inquiry will be sent straight to <strong>behanpeshala@gmail.com</strong>.
+        </p>
+
+        <form id="contactEmailForm" onsubmit="handleContactSubmit(event)">
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+            <div class="form-group">
+              <label for="contactName">YOUR NAME *</label>
+              <input type="text" id="contactName" name="name" class="form-control" placeholder="John Doe" required>
+            </div>
+            <div class="form-group">
+              <label for="contactEmail">YOUR EMAIL *</label>
+              <input type="email" id="contactEmail" name="email" class="form-control" placeholder="client@example.com" required>
+            </div>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+            <div class="form-group">
+              <label for="contactPhone">PHONE NUMBER</label>
+              <input type="tel" id="contactPhone" name="phone" class="form-control" placeholder="+94 7X XXX XXXX">
+            </div>
+            <div class="form-group">
+              <label for="contactSubject">SUBJECT *</label>
+              <input type="text" id="contactSubject" name="subject" class="form-control" placeholder="Project Inquiry / BOQ Request" required>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="contactMessage">YOUR MESSAGE *</label>
+            <textarea id="contactMessage" name="message" class="form-control" rows="5" placeholder="Write your message or project specifications here..." required style="resize: vertical;"></textarea>
+          </div>
+
+          <div id="contactAlert" style="display: none; padding: 14px 18px; border-radius: var(--radius-md); margin-bottom: 20px; font-size: 0.9rem;"></div>
+
+          <button type="submit" id="contactSubmitBtn" class="btn btn-amber" style="width: 100%; padding: 16px;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+            Send Email
+          </button>
+        </form>
+      </div>
+
+    </div>
+  </div>
+</section>
 
 <!-- ============ FOOTER ============ -->
 <footer class="site-footer">
@@ -1676,7 +1813,7 @@
       <div class="footer-about">
         <a href="#top" class="brand-logo" style="margin-bottom: 16px;">
           <div class="logo-icon">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 21h18"/><path d="M5 21V7l7-4 7 4v14"/><path d="M9 21v-6h6v6"/></svg>
+            <img src="assets/images/logo.png" alt="Chaminda Construction Logo">
           </div>
           <div class="brand-text">
             <h2>CHAMINDA</h2>
@@ -1693,6 +1830,7 @@
           <li><a href="#services">Our Services</a></li>
           <li><a href="#projects">Project Portfolio</a></li>
           <li><a href="#calculator">Cost Estimator</a></li>
+          <li><a href="#contact">Contact &amp; Email</a></li>
         </ul>
       </div>
 
@@ -1710,7 +1848,7 @@
         <p style="font-size:0.88rem; color:var(--text-secondary); line-height:1.6;">
           No. 145, Galle Road, Colombo 03, Sri Lanka<br>
           Phone: +94 11 200 0000<br>
-          Email: info@chamindaconstruction.lk
+          Email: <a href="mailto:behanpeshala@gmail.com" style="color:var(--amber);">behanpeshala@gmail.com</a>
         </p>
       </div>
     </div>
@@ -1868,6 +2006,51 @@
     `;
   }
 
+  // Contact Form Submission Handler (Sends email to behanpeshala@gmail.com)
+  async function handleContactSubmit(e) {
+    e.preventDefault();
+    const form = document.getElementById('contactEmailForm');
+    const alertBox = document.getElementById('contactAlert');
+    const btn = document.getElementById('contactSubmitBtn');
+
+    btn.disabled = true;
+    const originalBtnText = btn.innerHTML;
+    btn.innerHTML = `Sending Email...`;
+
+    const formData = new FormData(form);
+
+    try {
+      const res = await fetch('send_email.php', {
+        method: 'POST',
+        body: formData
+      });
+      const data = await res.json();
+
+      alertBox.style.display = 'block';
+      if (data.success) {
+        alertBox.style.background = 'rgba(16, 185, 129, 0.15)';
+        alertBox.style.border = '1px solid var(--amber)';
+        alertBox.style.color = '#34D399';
+        alertBox.innerHTML = '✔ <strong>Success!</strong> Your message has been sent to <strong>behanpeshala@gmail.com</strong>.';
+        form.reset();
+      } else {
+        alertBox.style.background = 'rgba(239, 68, 68, 0.15)';
+        alertBox.style.border = '1px solid #EF4444';
+        alertBox.style.color = '#FCA5A5';
+        alertBox.innerHTML = '✖ <strong>Failed:</strong> ' + data.message;
+      }
+    } catch (err) {
+      alertBox.style.display = 'block';
+      alertBox.style.background = 'rgba(239, 68, 68, 0.15)';
+      alertBox.style.border = '1px solid #EF4444';
+      alertBox.style.color = '#FCA5A5';
+      alertBox.innerHTML = '✖ An error occurred while sending email. You can also click the primary email link above to open your mail app.';
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = originalBtnText;
+    }
+  }
+
   // If the HTML page is opened directly from disk (file:///), link to localhost Apache server
   if (window.location.protocol === 'file:') {
     document.querySelectorAll('a[href="login.php"], a[href="ccms/login.php"]').forEach(el => {
@@ -1875,5 +2058,15 @@
     });
   }
 </script>
+<!-- ============ FLOATING WHATSAPP BUTTON ============ -->
+<a href="https://wa.me/94771234567?text=Hi%20Chaminda%20Construction,%20I%20have%20an%20inquiry%20about%20your%20services." target="_blank" class="whatsapp-float" aria-label="Chat on WhatsApp">
+  <div class="whatsapp-icon-wrap">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+      <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/>
+    </svg>
+  </div>
+  <span>Chat on WhatsApp</span>
+</a>
+
 </body>
 </html>

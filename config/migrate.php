@@ -59,6 +59,20 @@ try {
         echo "Added nic_number column to employees.\n";
     }
 
+    // 4. Contact Messages table
+    $pdo->exec("CREATE TABLE IF NOT EXISTS contact_messages (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        sender_name VARCHAR(100) NOT NULL,
+        sender_email VARCHAR(100) NOT NULL,
+        sender_phone VARCHAR(30) NULL,
+        subject VARCHAR(200) NOT NULL,
+        message TEXT NOT NULL,
+        recipient_email VARCHAR(100) NOT NULL,
+        status VARCHAR(50) NOT NULL DEFAULT 'Received',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB;");
+    echo "Contact messages table verified/created.\n";
+
     echo "Migration Completed Successfully!\n";
 
 } catch (Exception $e) {

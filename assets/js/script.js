@@ -367,4 +367,47 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   });
 
+  // -------------------------------------------------------------
+  // 5. INSTANT LIVE TABLE SEARCH FILTERING
+  // -------------------------------------------------------------
+  window.filterTable = function (query, tableSelector) {
+    query = (query || '').toLowerCase().trim();
+    tableSelector = tableSelector || 'table';
+    var table = document.querySelector(tableSelector);
+    if (!table) return;
+
+    var tbody = table.querySelector('tbody');
+    if (!tbody) return;
+
+    var rows = tbody.querySelectorAll('tr');
+    var visibleCount = 0;
+
+    rows.forEach(function (row) {
+      if (row.classList.contains('no-results-row')) return;
+
+      var text = row.textContent.toLowerCase();
+      if (text.indexOf(query) !== -1) {
+        row.style.display = '';
+        visibleCount++;
+      } else {
+        row.style.display = 'none';
+      }
+    });
+
+    var noResultsRow = tbody.querySelector('.no-results-row');
+    if (visibleCount === 0 && rows.length > 0) {
+      if (!noResultsRow) {
+        var colCount = table.querySelectorAll('thead th').length || 6;
+        noResultsRow = document.createElement('tr');
+        noResultsRow.className = 'no-results-row';
+        noResultsRow.innerHTML = `<td colspan="${colCount}" class="text-center text-muted py-4"><i class="bi bi-search me-1"></i> No matching records found.</td>`;
+        tbody.appendChild(noResultsRow);
+      } else {
+        noResultsRow.style.display = '';
+      }
+    } else if (noResultsRow) {
+      noResultsRow.style.display = 'none';
+    }
+  };
+
 });
